@@ -5,9 +5,13 @@ Port de Pixel Strike de Wollok Game a Python + pygame.
 ## Cómo correrlo
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate        # en Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
 ```
+
+El entorno virtual (`.venv/`) no se sube al repo: está en el `.gitignore`.
 
 Los assets (`.png` y `.mp3`) tienen que estar en `./assets`, junto a `main.py`,
 con los mismos nombres que usaba el proyecto Wollok. Si falta alguno el juego no
@@ -17,14 +21,14 @@ se rompe: dibuja un recuadro magenta y avisa por consola cuál faltó.
 
 | Tecla | Acción |
 |---|---|
-| W A S D | Moverse (mantener apretado repite el movimiento) |
+| W A S D | Moverse: un paso por pulsación, sin límite de rapidez (mantener apretado no repite, como en el original) |
 | P | Disparar (en el selector de niveles abre el selector de personajes) |
 | M | Pausa (no se puede con un power up activo) |
 | R / T | Reiniciar nivel / volver al selector (en pausa o al morir) |
 | Enter | Avanzar el tutorial / elegir personaje / saltar créditos |
 | F11 | Pantalla completa |
 
-Las teclas y varias constantes de juego están en `pixelstrike/ajustes.py`.
+Las teclas y varias constantes de juego están en `pixelstrike/ajustes.py`. Si preferís que mantener apretado repita el movimiento o el disparo, activá `MANTENER_PARA_MOVER` / `MANTENER_PARA_DISPARAR` en ese mismo archivo (vienen desactivadas).
 
 ## Estructura
 
@@ -62,7 +66,7 @@ pixelstrike/
 
 - **Pausa real**: los temporizadores del juego (spawns, ataques del jefe, power ups) se congelan en pausa.
 - **Música en loop** (en Wollok sonaba una sola vez).
-- **Mantener apretado** mueve y dispara (desactivable en `ajustes.py`).
+- **Mantener apretado** puede repetir el movimiento y el disparo, pero es opcional y viene **desactivado** para conservar el comportamiento original (ver `ajustes.py`).
 - **Jefe invulnerable durante su intro** (antes se le podía pegar antes de que arrancara la barra de vida).
 - **Power ups**: re-agarrar uno renueva el tiempo en vez de apilar el efecto. El daño de una bala se fija al disparar.
 - El jefe esquiva si **cualquier** bala del jugador viene por su fila (antes solo miraba la más antigua).
