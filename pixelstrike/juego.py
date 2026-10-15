@@ -3,7 +3,7 @@ import pygame
 
 from . import ajustes as aj
 from .escena_nivel import EscenaNivel
-from .escenas_menu import Creditos, SelectorNiveles, SelectorPersonajes
+from .escenas_menu import Creditos, SelectorDificultad, SelectorNiveles, SelectorPersonajes
 from .progreso import Progreso
 from .recursos import recursos
 
@@ -24,10 +24,13 @@ class Juego:
         self.escena = None
         self._escena_pendiente = None
         self.corriendo = True
-        self.ir_a_selector_niveles()
+        self.ir_a_selector_dificultad()
         self._aplicar_cambio_de_escena()
 
     # --- navegación entre escenas (el cambio real se aplica al final del cuadro) ---
+    def ir_a_selector_dificultad(self):
+        self._escena_pendiente = SelectorDificultad(self)
+
     def ir_a_selector_niveles(self):
         self._escena_pendiente = SelectorNiveles(self)
 

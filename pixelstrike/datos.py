@@ -69,6 +69,47 @@ CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75))
 
 
 # ============================================================================
+# Dificultades
+# ============================================================================
+@dataclass(frozen=True)
+class Dificultad:
+    """Cómo se modifican los enemigos y el jefe. NORMAL es el juego tal cual era.
+
+    Los datos base (DatosEnemigo, DatosArma...) no se tocan: cada enemigo aplica
+    estos valores al crearse.
+    """
+    clave: str
+    nombre: str
+    descripcion: str
+    mult_vida: float            # vida de los enemigos
+    mult_velocidad: float       # velocidad de avance (más alto = más rápido)
+    mult_cadencia: float        # multiplica el TIEMPO entre disparos (más alto = dispara menos)
+    mult_danio: float           # daño de las balas y del fuego enemigos
+    mult_spawn: float           # multiplica el TIEMPO entre apariciones (más alto = menos enemigos)
+    danio_escape: int           # daño al jugador si un enemigo cruza la pantalla
+    vida_jefe: int
+    intervalo_ataques_jefe: float   # segundos entre ataques de Kratos
+
+
+FACIL = Dificultad("facil", "Fácil",
+                   "Enemigos con la mitad de vida, más lentos y que pegan menos.",
+                   mult_vida=0.5, mult_velocidad=0.8, mult_cadencia=1.25, mult_danio=0.5,
+                   mult_spawn=1.25, danio_escape=10, vida_jefe=100, intervalo_ataques_jefe=1.4)
+NORMAL = Dificultad("normal", "Normal",
+                    "La experiencia original de Pixel Strike.",
+                    mult_vida=1.0, mult_velocidad=1.0, mult_cadencia=1.0, mult_danio=1.0,
+                    mult_spawn=1.0, danio_escape=15, vida_jefe=150, intervalo_ataques_jefe=1.1)
+DIFICIL = Dificultad("dificil", "Difícil",
+                     "Enemigos más resistentes, rápidos y letales. Kratos no tiene piedad.",
+                     mult_vida=1.5, mult_velocidad=1.25, mult_cadencia=0.8, mult_danio=1.5,
+                     mult_spawn=0.75, danio_escape=20, vida_jefe=225, intervalo_ataques_jefe=0.8)
+
+ORDEN_DIFICULTADES = (FACIL, NORMAL, DIFICIL)
+DIFICULTADES = {x.clave: x for x in ORDEN_DIFICULTADES}
+DIFICULTAD_INICIAL = NORMAL.clave
+
+
+# ============================================================================
 # Power ups
 # ============================================================================
 @dataclass(frozen=True)
@@ -158,6 +199,7 @@ GOTA_ADVERTENCIA = "advertenciaDeLluvia.png"
 FONDO_SELECTOR_PERSONAJES = "fondoSelectorPersonajes(2).png"
 FONDO_SELECTOR_NIVELES = "FondoSelectorNiveles(2).png"
 FONDO_CREDITOS = "fondoFinal.png"
+FONDO_SELECTOR_DIFICULTAD = "FondoJuego(3).png"
 
 # Música
 MUSICA_SELECTOR_PERSONAJES = "selectorDePersonajesSong.mp3"

@@ -8,6 +8,10 @@ class Progreso:
         self.personajes = {d.PERSONAJE_INICIAL}
         self.personaje = d.PERSONAJE_INICIAL      # clave del personaje elegido
         self.indice_tarjeta = 0                   # tarjeta visible en el selector de personajes
+        self.dificultad = d.DIFICULTAD_INICIAL    # clave de la dificultad elegida
+
+    def dificultad_actual(self):
+        return d.DIFICULTADES[self.dificultad]
 
     def desbloquear_nivel(self, clave):
         if clave:

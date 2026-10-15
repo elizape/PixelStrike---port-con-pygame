@@ -12,19 +12,22 @@ from .entidades import BalaEnemigo, BalaJugador
 from .interfaz import dibujar_barra_vida
 from .recursos import recursos
 
-DANIO_FUEGO = 10
+DANIO_FUEGO = 10      # daño base del fuego en el piso y de la lluvia (se escala por dificultad)
 
 
 class JefeFinal:
-    VIDA_MAX = 150
     COLUMNA = 27
     FILA_INICIAL = 2
     CANTIDAD_BOLAS = 3
 
-    def __init__(self, nivel):
+    def __init__(self, nivel, dificultad=d.NORMAL):
         self.nivel = nivel
         self.arma = d.BOLA_FUEGO_KRATOS
-        self.vida = self.VIDA_MAX
+        self.vida_max = dificultad.vida_jefe
+        self.vida = self.vida_max
+        self.intervalo_ataques = dificultad.intervalo_ataques_jefe
+        self.danio_fuego = max(1, round(DANIO_FUEGO * dificultad.mult_danio))
+        self.danio_bala = max(1, round(self.arma.danio * dificultad.mult_danio))
         self.x = self.COLUMNA
         self.y = self.FILA_INICIAL
         self.skin = d.JEFE_SKIN_INTRO
@@ -40,7 +43,7 @@ class JefeFinal:
         self.skin = d.JEFE_SKIN_COMBATE
         self.atacable = True
         self.nivel.mostrar(d.NOMBRE_KRATOS)
-        self._timer_ataques = self.nivel.sim.cada(1.1, self._elegir_ataque)
+        self._timer_ataques = self.nivel.sim.cada(self.intervalo_ataques, self._elegir_ataque)
 
     def _elegir_ataque(self):
         if not self.puede_atacar:
@@ -130,7 +133,7 @@ class JefeFinal:
         self.puede_atacar = True
 
     def _disparar(self):
-        self.nivel.balas.append(BalaEnemigo(self.x - 1, self.y, self.arma.imagen_bala, self.arma.danio))
+        self.nivel.balas.append(BalaEnemigo(self.x - 1, self.y, self.arma.imagen_bala, self.danio_bala))
         recursos.reproducir_al_azar(self.arma.sonidos)
 
     # --- dibujo ---------------------------------------------------------
@@ -148,7 +151,7 @@ class JefeFinal:
 
     def dibujar_barra_vida(self, lienzo):
         if self.vivo and self.atacable:
-            dibujar_barra_vida(lienzo, self.vida, self.VIDA_MAX, 8, 12, d.CORAZON_VIOLETA)
+            dibujar_barra_vida(lienzo, self.vida, self.vida_max, 8, 12, d.CORAZON_VIOLETA)
 
 
 class _AtaqueDeArea:
@@ -194,7 +197,7 @@ class FilasFuego(_AtaqueDeArea):
         while self._t_dano <= 0:
             self._t_dano += 0.5
             if nivel.jugador.y in self.filas:
-                nivel.jugador.recibir_danio(DANIO_FUEGO)
+                nivel.jugador.recibir_danio(self.jefe.danio_fuego)
 
     def dibujar_suelo(self, lienzo):
         imagen = {"advertencia": d.FILA_ADVERTENCIA, "fuego": d.FILA_FUEGO}.get(self.fase)
@@ -206,9 +209,10 @@ class FilasFuego(_AtaqueDeArea):
 class _Gota:
     ALTURA_INICIAL = 20
 
-    def __init__(self, x, y_objetivo):
+    def __init__(self, x, y_objetivo, danio=DANIO_FUEGO):
         self.x = x
         self.y_objetivo = y_objetivo
+        self.danio = danio
         self.y = float(self.ALTURA_INICIAL)
         self.aterrizo = False
         self._t_dano = 0.25
@@ -226,7 +230,7 @@ class _Gota:
             self._t_dano += 0.25
             jugador = nivel.jugador
             if (jugador.x, jugador.y) == (self.x, self.y_objetivo):
-                jugador.recibir_danio(DANIO_FUEGO)
+                jugador.recibir_danio(self.danio)
 
 
 class LluviaFuego(_AtaqueDeArea):
@@ -235,7 +239,7 @@ class LluviaFuego(_AtaqueDeArea):
     def __init__(self, jefe, cantidad, duracion):
         super().__init__(jefe)
         self.duracion = duracion
-        self.gotas = [_Gota(random.randint(0, 25), random.randint(0, aj.FILA_MAX))
+        self.gotas = [_Gota(random.randint(0, 25), random.randint(0, aj.FILA_MAX), jefe.danio_fuego)
                       for _ in range(cantidad)]
         self.fase = "advertencia"         # advertencia -> espera -> lluvia
 

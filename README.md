@@ -25,10 +25,40 @@ se rompe: dibuja un recuadro magenta y avisa por consola cuál faltó.
 | P | Disparar (en el selector de niveles abre el selector de personajes) |
 | M | Pausa (no se puede con un power up activo) |
 | R / T | Reiniciar nivel / volver al selector (en pausa o al morir) |
-| Enter | Avanzar el tutorial / elegir personaje / saltar créditos |
+| Enter | Confirmar dificultad / avanzar el tutorial / elegir personaje / saltar créditos |
+| Esc | En el selector de niveles: volver al selector de dificultad |
 | F11 | Pantalla completa |
 
+En el selector de dificultad se elige con W/S (o A/D) y Enter.
+
 Las teclas y varias constantes de juego están en `pixelstrike/ajustes.py`. Si preferís que mantener apretado repita el movimiento o el disparo, activá `MANTENER_PARA_MOVER` / `MANTENER_PARA_DISPARAR` en ese mismo archivo (vienen desactivadas).
+
+## Dificultad
+
+Al abrir el juego se elige entre **Fácil**, **Normal** y **Difícil**. Normal es el juego original. Se puede cambiar en cualquier momento con Esc desde el selector de niveles, sin perder niveles ni personajes desbloqueados. El tutorial (nivel 0) siempre se juega en Normal.
+
+| | Fácil | Normal | Difícil |
+|---|---|---|---|
+| Vida de los enemigos | ×0,5 | ×1 | ×1,5 |
+| Velocidad de los enemigos | ×0,8 | ×1 | ×1,25 |
+| Tiempo entre disparos enemigos | ×1,25 | ×1 | ×0,8 |
+| Daño de balas y fuego enemigos | ×0,5 | ×1 | ×1,5 |
+| Tiempo entre apariciones | ×1,25 | ×1 | ×0,75 |
+| Daño si un enemigo se escapa | 10 | 15 | 20 |
+| Vida de Kratos | 100 | 150 | 225 |
+| Tiempo entre ataques de Kratos | 1,4 s | 1,1 s | 0,8 s |
+
+Los valores están en `pixelstrike/datos.py` (`FACIL`, `NORMAL`, `DIFICIL`). El diseño completo está en [`docs/DISENO_DIFICULTAD.md`](docs/DISENO_DIFICULTAD.md).
+
+La pantalla usa la fuente por defecto de pygame. Si querés una fuente píxel, copiala como `assets/fuente.ttf` y se usa sola.
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Corren sin ventana ni audio.
 
 ## Estructura
 
@@ -45,9 +75,11 @@ pixelstrike/
   interfaz.py              barras de vida y de power ups
   escena.py                clase base de pantallas
   escena_nivel.py          tutorial, hordas y nivel del jefe
-  escenas_menu.py          selector de niveles, selector de personajes, créditos
-  progreso.py              niveles y personajes desbloqueados
+  escenas_menu.py          selector de dificultad, de niveles, de personajes, créditos
+  progreso.py              niveles, personajes desbloqueados y dificultad elegida
   juego.py                 ventana, bucle principal, cambio de escenas
+tests/                     tests sin ventana (unittest)
+docs/                      documentos de diseño
 ```
 
 ## Equivalencias con el proyecto Wollok
@@ -64,6 +96,7 @@ pixelstrike/
 
 ## Cambios respecto al original
 
+- **Selector de dificultad** al iniciar (Fácil / Normal / Difícil), que no existía en el original.
 - **Pausa real**: los temporizadores del juego (spawns, ataques del jefe, power ups) se congelan en pausa.
 - **Música en loop** (en Wollok sonaba una sola vez).
 - **Mantener apretado** puede repetir el movimiento y el disparo, pero es opcional y viene **desactivado** para conservar el comportamiento original (ver `ajustes.py`).

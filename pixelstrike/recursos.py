@@ -19,6 +19,8 @@ class Recursos:
     def __init__(self):
         self._imagenes = {}
         self._sonidos = {}
+        self._fuentes = {}
+        self._musica_actual = None
         self.faltantes = set()
         self.audio_ok = False
 
@@ -51,17 +53,22 @@ class Recursos:
     def reproducir_al_azar(self, nombres, volumen=1.0):
         self.reproducir(random.choice(nombres), volumen)
 
-    def musica(self, nombre, volumen=aj.VOLUMEN_MUSICA, repetir=True):
+    def musica(self, nombre, volumen=aj.VOLUMEN_MUSICA, repetir=True, continuar=False):
+        """Con `continuar=True`, si ya está sonando esa misma canción no la reinicia."""
         if not self.audio_ok:
+            return
+        if continuar and nombre == self._musica_actual and pygame.mixer.music.get_busy():
             return
         try:
             pygame.mixer.music.load(str(aj.DIR_ASSETS / nombre))
             pygame.mixer.music.set_volume(volumen)
             pygame.mixer.music.play(-1 if repetir else 0)
+            self._musica_actual = nombre
         except (FileNotFoundError, pygame.error):
             self._avisar_faltante(nombre)
 
     def detener_musica(self):
+        self._musica_actual = None
         if self.audio_ok:
             pygame.mixer.music.stop()
 
@@ -89,6 +96,28 @@ class Recursos:
 
     def dibujar_fondo(self, lienzo, nombre):
         lienzo.blit(self.imagen(nombre, (aj.ANCHO, aj.ALTO)), (0, 0))
+
+    # --- texto ----------------------------------------------------------
+    def fuente(self, tam):
+        """Usa assets/fuente.ttf si existe (ideal una fuente píxel); si no, la fuente por defecto."""
+        fuente = self._fuentes.get(tam)
+        if fuente is None:
+            ruta = aj.DIR_ASSETS / "fuente.ttf"
+            if not pygame.font.get_init():
+                pygame.font.init()
+            fuente = pygame.font.Font(str(ruta) if ruta.is_file() else None, tam)
+            self._fuentes[tam] = fuente
+        return fuente
+
+    def texto(self, lienzo, texto, tam, color, centro_x, y, sombra=(0, 0, 0)):
+        """Dibuja `texto` centrado en `centro_x` (en píxeles del lienzo), con `y` como borde superior."""
+        fuente = self.fuente(tam)
+        imagen = fuente.render(texto, True, color)
+        x = centro_x - imagen.get_width() // 2
+        if sombra:
+            lienzo.blit(fuente.render(texto, True, sombra), (x + max(2, tam // 14), y + max(2, tam // 14)))
+        lienzo.blit(imagen, (x, y))
+        return imagen.get_rect(topleft=(x, y))
 
     # --- internos -------------------------------------------------------
     def _avisar_faltante(self, nombre):

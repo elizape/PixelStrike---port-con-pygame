@@ -1,4 +1,4 @@
-"""Pantallas de menú: selector de niveles, selector de personajes y créditos."""
+"""Pantallas de menú: selector de dificultad, de niveles, de personajes y créditos."""
 import pygame
 
 from . import ajustes as aj
@@ -6,6 +6,68 @@ from . import datos as d
 from .entrada import TeclasRepetibles
 from .escena import Escena
 from .recursos import recursos
+
+DORADO = (255, 210, 63)
+GRIS_CLARO = (205, 205, 205)
+BLANCO = (255, 255, 255)
+
+
+class SelectorDificultad(Escena):
+    """Primera pantalla del juego: W/S (o A/D) para elegir, Enter para confirmar."""
+
+    def __init__(self, juego):
+        super().__init__(juego)
+        claves = [x.clave for x in d.ORDEN_DIFICULTADES]
+        self.indice = claves.index(juego.progreso.dificultad)
+        self._velo = None
+
+    def al_entrar(self):
+        recursos.musica(d.MUSICA_SELECTOR_NIVELES, aj.VOLUMEN_MUSICA, continuar=True)
+
+    def manejar_evento(self, evento):
+        if evento.type != pygame.KEYDOWN:
+            return
+        tecla = evento.key
+        if tecla in (aj.TECLA_ARRIBA, aj.TECLA_IZQUIERDA):
+            self._mover(-1)
+        elif tecla in (aj.TECLA_ABAJO, aj.TECLA_DERECHA):
+            self._mover(1)
+        elif tecla in aj.TECLAS_ENTER:
+            self._confirmar()
+
+    def _mover(self, paso):
+        nuevo = self.indice + paso
+        if 0 <= nuevo < len(d.ORDEN_DIFICULTADES):
+            self.indice = nuevo
+            recursos.reproducir(d.SFX_CLICK)
+
+    def _confirmar(self):
+        self.juego.progreso.dificultad = d.ORDEN_DIFICULTADES[self.indice].clave
+        recursos.reproducir(d.SFX_CLICK)
+        self.juego.ir_a_selector_niveles()
+
+    def dibujar(self, lienzo):
+        recursos.dibujar_fondo(lienzo, d.FONDO_SELECTOR_DIFICULTAD)
+        if self._velo is None:
+            self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
+            self._velo.fill((0, 0, 0, 150))
+        lienzo.blit(self._velo, (0, 0))
+
+        centro = aj.ANCHO // 2
+        recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
+        recursos.texto(lienzo, "Elegí la dificultad", 52, BLANCO, centro, 270)
+        for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
+            y = 370 + i * 100
+            if i == self.indice:
+                caja = pygame.Rect(0, 0, 560, 84)
+                caja.center = (centro, y + 31)
+                pygame.draw.rect(lienzo, DORADO, caja, 4, border_radius=14)
+                recursos.texto(lienzo, dificultad.nombre.upper(), 72, DORADO, centro, y)
+            else:
+                recursos.texto(lienzo, dificultad.nombre.upper(), 64, GRIS_CLARO, centro, y + 4)
+        recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 38, BLANCO, centro, 710)
+        recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 32, GRIS_CLARO, centro, 810)
+        self.dibujar_indicadores(lienzo)
 
 
 class SelectorNiveles(Escena):
@@ -23,7 +85,8 @@ class SelectorNiveles(Escena):
         }, repetir=aj.MANTENER_PARA_MOVER)
 
     def al_entrar(self):
-        recursos.musica(d.MUSICA_SELECTOR_NIVELES, aj.VOLUMEN_MUSICA)
+        # continuar=True: si venimos del selector de dificultad, la música sigue sin cortarse
+        recursos.musica(d.MUSICA_SELECTOR_NIVELES, aj.VOLUMEN_MUSICA, continuar=True)
 
     # --- movimiento: el jugador solo puede entrar a una puerta por debajo de ella ---
     def _bajo_una_puerta(self):
@@ -66,6 +129,8 @@ class SelectorNiveles(Escena):
         if evento.key == aj.TECLA_DISPARO:       # 'p' abre el selector de personajes
             recursos.detener_musica()
             self.juego.ir_a_selector_personajes()
+        elif evento.key == aj.TECLA_VOLVER:      # Esc: cambiar la dificultad
+            self.juego.ir_a_selector_dificultad()
 
     def actualizar(self, dt):
         super().actualizar(dt)
@@ -94,6 +159,8 @@ class SelectorNiveles(Escena):
                              px, d.FILA_PUERTAS)
         personaje = d.PERSONAJES[self.juego.progreso.personaje]
         recursos.dibujar(lienzo, personaje.skin, self.x, self.y)
+        recursos.texto(lienzo, f"Dificultad: {self.juego.progreso.dificultad_actual().nombre}   (Esc: cambiar)",
+                       30, BLANCO, aj.ANCHO - 330, 14)
         self.dibujar_indicadores(lienzo)
 
 

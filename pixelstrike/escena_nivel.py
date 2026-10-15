@@ -22,12 +22,15 @@ class EscenaNivel(Escena):
         super().__init__(juego)
         self.datos = d.NIVELES[clave]
         self.personaje = d.PERSONAJES[juego.progreso.personaje]
+        # El tutorial siempre se juega en Normal, para que las instrucciones no cambien.
+        self.dificultad = (d.NORMAL if self.datos.tipo == "tutorial"
+                           else juego.progreso.dificultad_actual())
         self.jugador = Jugador(self.personaje)
         self.sim = Planificador()      # solo corre mientras se juega: se congela en la pausa
         self.enemigos = []
         self.balas = []
         self.items = []
-        self.jefe = JefeFinal(self) if self.datos.tipo == "jefe" else None
+        self.jefe = JefeFinal(self, self.dificultad) if self.datos.tipo == "jefe" else None
         self.estado = CARGANDO
         self.paso_tutorial = 0
         self._aviso_pausa_visible = False
@@ -158,7 +161,7 @@ class EscenaNivel(Escena):
 
     def enemigo_escapo(self, enemigo):
         enemigo.activo = False
-        self.jugador.recibir_danio(aj.DANIO_ENEMIGO_ESCAPADO)
+        self.jugador.recibir_danio(self.dificultad.danio_escape)
 
     def jefe_derrotado(self):
         self.ui.despues(0.05, self._victoria)
@@ -188,13 +191,14 @@ class EscenaNivel(Escena):
     def _oleada(self, con_powerup):
         """Va soltando los enemigos de a uno, en orden aleatorio."""
         datos = self.datos
-        cola = ([Enemigo(d.ALIEN_RAPTOR) for _ in range(datos.aliens)]
-                + [Enemigo(d.CRAWLER) for _ in range(datos.crawlers)])
+        dificultad = self.dificultad
+        cola = ([Enemigo(d.ALIEN_RAPTOR, dificultad) for _ in range(datos.aliens)]
+                + [Enemigo(d.CRAWLER, dificultad) for _ in range(datos.crawlers)])
         random.shuffle(cola)
         if con_powerup and datos.powerup and datos.enemigo_con_powerup <= len(cola):
             cola[datos.enemigo_con_powerup - 1].powerup = datos.powerup
         yield 0.5
-        intervalo = random.randint(datos.spawn_min, datos.spawn_max)
+        intervalo = random.randint(datos.spawn_min, datos.spawn_max) * dificultad.mult_spawn
         for enemigo in cola:
             yield intervalo
             self.enemigos.append(enemigo)
@@ -225,7 +229,7 @@ class EscenaNivel(Escena):
                   (d.CRAWLER, d.TUTO_INTERACTIVO_2, None))
         for tipo, actual, siguiente in etapas:
             yield 2.5
-            self.enemigos.append(Enemigo(tipo))
+            self.enemigos.append(Enemigo(tipo, self.dificultad))
             while self.enemigos:
                 yield 0.25
             recursos.reproducir(d.SFX_NIVEL_NUEVO)

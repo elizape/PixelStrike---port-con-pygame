@@ -118,7 +118,8 @@ Para el daño del jefe: las bolas de fuego usan `mult_danio` a través de su arm
 
 - **La elección vive en `Progreso`**, que ya es el estado compartido entre pantallas.
 - **No se usa `Jugador.defensa` para el daño recibido**: el power up de defensa lo pone en 0 al activarse y lo **restaura a 1** al terminar, así que borraría el multiplicador de la dificultad. El daño se escala en el origen, cuando nace la bala enemiga.
-- **Los intervalos de aparición pasan de enteros a decimales**: hoy `random.randint(spawn_min, spawn_max)`; con multiplicadores como 1,25 hay que sortear con `random.uniform`. Con Normal el rango sigue siendo el mismo.
+- **El sorteo de aparición se mantiene entero y después se multiplica**: `random.randint(spawn_min, spawn_max) * mult_spawn`. Con Normal el resultado es idéntico al de antes.
+- **`mult_cadencia` y `mult_spawn` multiplican tiempos**, no frecuencias: un valor mayor que 1 significa menos disparos o menos enemigos (Fácil), y uno menor que 1 significa más (Difícil).
 - **Constructores con valor por defecto**: `Enemigo(tipo, dificultad=NORMAL)` y `JefeFinal(nivel, dificultad=NORMAL)`, así el tutorial y el resto del código no cambian.
 - **La vida del jugador no se toca**: cambiar `vida_max` cambiaría la cantidad de corazones del HUD y la ventaja de Kratos.
 
@@ -167,8 +168,8 @@ Debajo de las opciones, una línea corta describe la dificultad resaltada.
 |---|---|
 | `datos.py` | Clase `Dificultad`, constantes `FACIL`, `NORMAL`, `DIFICIL` y `ORDEN_DIFICULTADES` |
 | `progreso.py` | Atributo `dificultad` (por defecto `"normal"`) y `dificultad_actual()` |
-| `ajustes.py` | `TECLA_VOLVER = K_ESCAPE` |
-| `recursos.py` | Método `fuente(tam)` con cache; usa `assets/fuente.ttf` si existe y la fuente por defecto si no |
+| `ajustes.py` | `TECLA_VOLVER = K_ESCAPE`; se elimina `DANIO_ENEMIGO_ESCAPADO` (ahora es `Dificultad.danio_escape`) |
+| `recursos.py` | `fuente(tam)` y `texto(...)`; usa `assets/fuente.ttf` si existe y la fuente por defecto si no. `musica(..., continuar=True)` no reinicia la canción si ya está sonando |
 | `escenas_menu.py` | Nueva `SelectorDificultad`; en `SelectorNiveles`, Esc vuelve a ella y se dibuja la dificultad actual |
 | `juego.py` | `ir_a_selector_dificultad()` y arrancar ahí en vez de en el selector de niveles |
 | `entidades.py` | `Enemigo` recibe la dificultad; `BalaEnemigo` toma el daño ya escalado |

@@ -171,16 +171,20 @@ class Jugador:
 # Enemigos
 # ============================================================================
 class Enemigo:
-    def __init__(self, tipo):
+    def __init__(self, tipo, dificultad=d.NORMAL):
         self.tipo = tipo
         self.x = aj.ENEMIGO_X_INICIAL
         self.y = random.randint(0, aj.FILA_MAX)
-        self.vida = tipo.vida
+        # La dificultad se aplica acá, al crear al enemigo; los datos base no se modifican.
+        self.vida = max(1, round(tipo.vida * dificultad.mult_vida))
         self.powerup = None              # clave del power up que suelta al morir
         self.activo = True
-        self._intervalo_paso = random.uniform(*tipo.intervalo_paso)
+        self._intervalo_paso = random.uniform(*tipo.intervalo_paso) / dificultad.mult_velocidad
         self._t_paso = self._intervalo_paso
-        self._t_disparo = tipo.arma.cadencia
+        self._cadencia = tipo.arma.cadencia * dificultad.mult_cadencia
+        self._t_disparo = self._cadencia
+        # El daño se escala al nacer la bala (no con Jugador.defensa, que el power up pisa).
+        self._danio_bala = max(1, round(tipo.arma.danio * dificultad.mult_danio))
 
     def actualizar(self, dt, nivel):
         self._t_paso -= dt
@@ -192,7 +196,7 @@ class Enemigo:
                 return
         self._t_disparo -= dt
         if self._t_disparo <= 0:
-            self._t_disparo += self.tipo.arma.cadencia
+            self._t_disparo += self._cadencia
             self._disparar(nivel)
 
     def _disparar(self, nivel):
@@ -200,7 +204,7 @@ class Enemigo:
         # Solo dispara si el jugador está en su fila y adelante de él
         if jugador.vivo and jugador.y == self.y and jugador.x < self.x:
             arma = self.tipo.arma
-            nivel.balas.append(BalaEnemigo(self.x - 1, self.y, arma.imagen_bala, arma.danio))
+            nivel.balas.append(BalaEnemigo(self.x - 1, self.y, arma.imagen_bala, self._danio_bala))
             recursos.reproducir_al_azar(arma.sonidos)
 
     def recibir_danio(self, cantidad, nivel):

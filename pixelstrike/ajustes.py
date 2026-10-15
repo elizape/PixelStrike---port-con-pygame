@@ -26,7 +26,6 @@ JUGADOR_INICIO = (2, 2)
 SELECTOR_INICIO = (15, 1)     # posición inicial en el selector de niveles
 ENEMIGO_X_INICIAL = 30
 ENEMIGO_X_LIMITE = -3         # si un enemigo llega acá, escapó y daña al jugador
-DANIO_ENEMIGO_ESCAPADO = 15
 VIDA_POR_CORAZON = 10
 VIDA_CRITICA = 20             # por debajo suena el latido y parpadea el jugador
 
@@ -39,7 +38,8 @@ PARPADEO_ICONO = 0.3          # parpadeo del ícono cuando se acaba un power up
 PARPADEO_ICONO_REPS = 7
 
 # --- Entrada -----------------------------------------------------------------
-# Mejora respecto al original: mantener apretada una tecla repite la acción.
+# Opcional: mantener apretada una tecla repite la acción. En el original no pasaba,
+# así que viene desactivado.
 MANTENER_PARA_MOVER = False
 MANTENER_PARA_DISPARAR = False
 REPETICION_RETARDO = 0.22     # segundos hasta empezar a repetir
@@ -53,4 +53,5 @@ TECLA_DISPARO = pygame.K_p
 TECLA_PAUSA = pygame.K_m
 TECLA_REINICIAR = pygame.K_r
 TECLA_SELECTOR = pygame.K_t
+TECLA_VOLVER = pygame.K_ESCAPE      # del selector de niveles al selector de dificultad
 TECLAS_ENTER = (pygame.K_RETURN, pygame.K_KP_ENTER)
