@@ -50,6 +50,17 @@ Al abrir el juego se elige entre **Fácil**, **Normal** y **Difícil**. Normal e
 
 Los valores están en `pixelstrike/datos.py` (`FACIL`, `NORMAL`, `DIFICIL`). El diseño completo está en [`docs/DISENO_DIFICULTAD.md`](docs/DISENO_DIFICULTAD.md).
 
+### Título y triángulos del selector (opcionales)
+
+El selector de dificultad usa dos imágenes si están en `assets/`; si faltan, muestra el texto y el recuadro dorado de siempre:
+
+| Archivo | Qué es |
+|---|---|
+| `assets/tituloPixelStrike.png` | Título, centrado arriba. Si es más grande que 1400x230 px se reduce solo, conservando la proporción. |
+| `assets/selectorTriangulos.png` | **Un solo PNG** con los dos triángulos enfrentados (izquierdo y derecho). Se parte por la mitad y a cada mitad se le recorta el borde transparente, así que quedan siempre a 30 px del texto de la opción elegida, sin importar el espacio vacío del PNG. |
+
+Los nombres están en `pixelstrike/datos.py` (`TITULO_JUEGO`, `TRIANGULOS_SELECTOR`) y las medidas en `escenas_menu.py`.
+
 La pantalla usa la fuente por defecto de pygame. Si querés una fuente píxel, copiala como `assets/fuente.ttf` y se usa sola.
 
 ## Tests

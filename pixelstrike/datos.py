@@ -201,6 +201,11 @@ FONDO_SELECTOR_NIVELES = "FondoSelectorNiveles(2).png"
 FONDO_CREDITOS = "fondoFinal.png"
 FONDO_SELECTOR_DIFICULTAD = "FondoJuego(3).png"
 
+# Imágenes OPCIONALES del selector de dificultad. Si no están en assets/ se usa
+# texto para el título y un recuadro dorado para marcar la opción elegida.
+TITULO_JUEGO = "tituloPixelStrike.png"
+TRIANGULOS_SELECTOR = "selectorTriangulos.png"   # un solo PNG con dos triángulos enfrentados
+
 # Música
 MUSICA_SELECTOR_PERSONAJES = "selectorDePersonajesSong.mp3"
 MUSICA_SELECTOR_NIVELES = "selectorDeNivelesSong.mp3"
