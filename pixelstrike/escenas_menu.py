@@ -104,33 +104,14 @@ class SelectorDificultad(Escena):
         if not self._adornos_listos:
             self._preparar_adornos()
         recursos.dibujar_fondo(lienzo, d.FONDO_SELECTOR_DIFICULTAD)
-        # if self._velo is None:
-        #     self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
-        #     self._velo.fill((0, 0, 0, 150))          genera un efecto de oscurecimiento del fondo pero no queda bien con la imagen actual
-        # lienzo.blit(self._velo, (0, 0))  
 
         centro = aj.ANCHO // 2
-<<<<<<< HEAD
-        recursos.texto(lienzo, "Elije la dificultad", 42, BLANCO, centro, 270)
-=======
-        if self._titulo is not None:
-            lienzo.blit(self._titulo, self._titulo.get_rect(center=(centro, TITULO_CENTRO_Y)))
-        else:
-            recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
-        recursos.texto(lienzo, "Elegí la dificultad", 52, BLANCO, centro, 270)
->>>>>>> refs/remotes/origin/main
+        recursos.texto(lienzo, "Elije la dificultad", 52, BLANCO, centro, 270)
         for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
             y = OPCION_Y0 + i * OPCION_PASO
             if i == self.indice:
-<<<<<<< HEAD
-                caja = pygame.Rect(0, 0, 420, 80)
-                caja.center = (centro, y + 24)
-                pygame.draw.rect(lienzo, DORADO, caja, 4)
-                recursos.texto(lienzo, dificultad.nombre.upper(), 50, DORADO, centro, y)
-=======
                 texto = recursos.texto(lienzo, dificultad.nombre.upper(), TAM_OPCION_ELEGIDA, DORADO, centro, y)
                 self._marcar_opcion(lienzo, texto)
->>>>>>> refs/remotes/origin/main
             else:
                 recursos.texto(lienzo, dificultad.nombre.upper(), 40, GRIS_CLARO, centro, y + 4)
         recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 32, BLANCO, centro, 710)
