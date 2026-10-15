@@ -11,15 +11,56 @@ DORADO = (255, 210, 63)
 GRIS_CLARO = (205, 205, 205)
 BLANCO = (255, 255, 255)
 
+# Diseño del selector de dificultad (píxeles del lienzo de 1600x900)
+TITULO_CENTRO_Y = 150          # centro vertical del título (imagen o texto)
+TITULO_MAX = (1400, 230)       # si la imagen del título es más grande, se reduce a este tamaño
+OPCION_Y0, OPCION_PASO = 370, 100
+TAM_OPCION_ELEGIDA = 72
+MARGEN_TRIANGULOS = 30         # separación entre cada triángulo y el texto de la opción
+
 
 class SelectorDificultad(Escena):
-    """Primera pantalla del juego: W/S (o A/D) para elegir, Enter para confirmar."""
+    """Primera pantalla del juego: W/S (o A/D) para elegir, Enter para confirmar.
+
+    Si existen `tituloPixelStrike.png` y `selectorTriangulos.png` en assets/ se usan;
+    si no, se dibujan un título de texto y un recuadro dorado.
+    """
 
     def __init__(self, juego):
         super().__init__(juego)
         claves = [x.clave for x in d.ORDEN_DIFICULTADES]
         self.indice = claves.index(juego.progreso.dificultad)
         self._velo = None
+        self._adornos_listos = False
+        self._titulo = None            # Surface del título, o None para usar texto
+        self._triangulos = None        # (izquierdo, derecho), o None para usar el recuadro dorado
+
+    def _preparar_adornos(self):
+        """Carga (una sola vez) las imágenes opcionales del título y de los triángulos."""
+        self._adornos_listos = True
+        if recursos.existe(d.TITULO_JUEGO):
+            titulo = recursos.imagen(d.TITULO_JUEGO)
+            ancho_max, alto_max = TITULO_MAX
+            if titulo.get_width() > ancho_max or titulo.get_height() > alto_max:
+                escala = min(ancho_max / titulo.get_width(), alto_max / titulo.get_height())
+                titulo = pygame.transform.scale(
+                    titulo, (round(titulo.get_width() * escala), round(titulo.get_height() * escala)))
+            self._titulo = titulo
+        if recursos.existe(d.TRIANGULOS_SELECTOR):
+            imagen = recursos.imagen(d.TRIANGULOS_SELECTOR)
+            ancho, alto = imagen.get_size()
+            # El PNG se parte por la mitad: cada triángulo se acomoda a un lado del texto,
+            # sin importar cuánto mida la palabra. Cada mitad se recorta a lo que realmente
+            # dibuja, así el margen con el texto es siempre MARGEN_TRIANGULOS aunque el PNG
+            # tenga espacio vacío alrededor.
+            self._triangulos = (self._recortar(imagen.subsurface((0, 0, ancho // 2, alto))),
+                                self._recortar(imagen.subsurface((ancho // 2, 0, ancho - ancho // 2, alto))))
+
+    @staticmethod
+    def _recortar(superficie):
+        """Quita el borde transparente (si la mitad está vacía, la deja como está)."""
+        caja = superficie.get_bounding_rect()
+        return superficie.subsurface(caja) if caja.width and caja.height else superficie
 
     def al_entrar(self):
         recursos.musica(d.MUSICA_SELECTOR_NIVELES, aj.VOLUMEN_MUSICA, continuar=True)
@@ -41,12 +82,27 @@ class SelectorDificultad(Escena):
             self.indice = nuevo
             recursos.reproducir(d.SFX_CLICK)
 
+    def _marcar_opcion(self, lienzo, texto):
+        """Marca la opción elegida: un triángulo a cada lado del texto, o un recuadro dorado."""
+        centro_y = texto.top + round(TAM_OPCION_ELEGIDA * 0.43)     # centro visual de las mayúsculas
+        if self._triangulos is None:
+            caja = pygame.Rect(0, 0, 560, 84)
+            caja.center = (texto.centerx, centro_y)
+            pygame.draw.rect(lienzo, DORADO, caja, 4, border_radius=14)
+            return
+        izquierdo, derecho = self._triangulos
+        lienzo.blit(izquierdo, (texto.left - MARGEN_TRIANGULOS - izquierdo.get_width(),
+                                centro_y - izquierdo.get_height() // 2))
+        lienzo.blit(derecho, (texto.right + MARGEN_TRIANGULOS, centro_y - derecho.get_height() // 2))
+
     def _confirmar(self):
         self.juego.progreso.dificultad = d.ORDEN_DIFICULTADES[self.indice].clave
         recursos.reproducir(d.SFX_CLICK)
         self.juego.ir_a_selector_niveles()
 
     def dibujar(self, lienzo):
+        if not self._adornos_listos:
+            self._preparar_adornos()
         recursos.dibujar_fondo(lienzo, d.FONDO_SELECTOR_DIFICULTAD)
         # if self._velo is None:
         #     self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
@@ -54,14 +110,27 @@ class SelectorDificultad(Escena):
         # lienzo.blit(self._velo, (0, 0))  
 
         centro = aj.ANCHO // 2
+<<<<<<< HEAD
         recursos.texto(lienzo, "Elije la dificultad", 42, BLANCO, centro, 270)
+=======
+        if self._titulo is not None:
+            lienzo.blit(self._titulo, self._titulo.get_rect(center=(centro, TITULO_CENTRO_Y)))
+        else:
+            recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
+        recursos.texto(lienzo, "Elegí la dificultad", 52, BLANCO, centro, 270)
+>>>>>>> refs/remotes/origin/main
         for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
-            y = 370 + i * 100
+            y = OPCION_Y0 + i * OPCION_PASO
             if i == self.indice:
+<<<<<<< HEAD
                 caja = pygame.Rect(0, 0, 420, 80)
                 caja.center = (centro, y + 24)
                 pygame.draw.rect(lienzo, DORADO, caja, 4)
                 recursos.texto(lienzo, dificultad.nombre.upper(), 50, DORADO, centro, y)
+=======
+                texto = recursos.texto(lienzo, dificultad.nombre.upper(), TAM_OPCION_ELEGIDA, DORADO, centro, y)
+                self._marcar_opcion(lienzo, texto)
+>>>>>>> refs/remotes/origin/main
             else:
                 recursos.texto(lienzo, dificultad.nombre.upper(), 40, GRIS_CLARO, centro, y + 4)
         recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 32, BLANCO, centro, 710)

@@ -4,8 +4,11 @@
 """
 import os
 import random
+import shutil
 import sys
+import tempfile
 import unittest
+import unittest.mock as mock
 from pathlib import Path
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -18,9 +21,11 @@ from pixelstrike import ajustes as aj  # noqa: E402
 from pixelstrike import datos as d  # noqa: E402
 from pixelstrike.entidades import Enemigo, Jugador  # noqa: E402
 from pixelstrike.escena_nivel import EscenaNivel  # noqa: E402
-from pixelstrike.escenas_menu import SelectorDificultad, SelectorNiveles  # noqa: E402
+from pixelstrike.escenas_menu import (  # noqa: E402
+    DORADO, MARGEN_TRIANGULOS, TITULO_MAX, SelectorDificultad, SelectorNiveles)
 from pixelstrike.jefe import JefeFinal  # noqa: E402
 from pixelstrike.juego import Juego  # noqa: E402
+from pixelstrike.recursos import recursos  # noqa: E402
 
 
 def tecla(clave):
@@ -227,6 +232,86 @@ class FlujoDeEscenasTest(unittest.TestCase):
         self.pulsar(aj.TECLA_REINICIAR)
         self.assertIsInstance(self.juego.escena, EscenaNivel)
         self.assertIs(self.juego.escena.dificultad, d.DIFICIL)
+
+
+class AdornosSelectorTest(unittest.TestCase):
+    """Título y triángulos opcionales. Se prueban con una carpeta de assets temporal."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        parche = mock.patch.object(aj, "DIR_ASSETS", self.tmp)
+        parche.start()
+        self.addCleanup(parche.stop)
+        imagenes, faltantes = dict(recursos._imagenes), set(recursos.faltantes)
+        self.addCleanup(lambda: (recursos._imagenes.clear(), recursos._imagenes.update(imagenes),
+                                 recursos.faltantes.clear(), recursos.faltantes.update(faltantes)))
+        self.juego = Juego()
+        self.lienzo = self.juego.lienzo
+
+    def guardar_png(self, nombre, ancho, alto, dibujar=None):
+        superficie = pygame.Surface((ancho, alto), pygame.SRCALPHA)
+        if dibujar:
+            dibujar(superficie)
+        else:
+            superficie.fill((200, 30, 30, 255))
+        pygame.image.save(superficie, str(self.tmp / nombre))
+
+    def triangulos(self, superficie):
+        """Dos triángulos enfrentados, con espacio vacío alrededor y en el medio."""
+        pygame.draw.polygon(superficie, (255, 210, 63), [(40, 5), (40, 85), (110, 45)])
+        pygame.draw.polygon(superficie, (255, 210, 63), [(590, 5), (590, 85), (660, 45)][::-1])
+
+    def dibujar_escena(self):
+        self.juego.escena.dibujar(self.lienzo)
+        return self.juego.escena
+
+    def test_sin_imagenes_se_usa_texto_y_recuadro(self):
+        escena = self.dibujar_escena()
+        self.assertIsNone(escena._titulo)
+        self.assertIsNone(escena._triangulos)
+        lienzo = pygame.Surface((1600, 900), pygame.SRCALPHA)
+        texto = pygame.Rect(700, 400, 200, 60)
+        escena._marcar_opcion(lienzo, texto)
+        borde = (texto.centerx - 279, texto.top + round(72 * 0.43))
+        self.assertEqual(tuple(lienzo.get_at(borde))[:3], DORADO)
+
+    def test_titulo_grande_se_reduce_conservando_la_proporcion(self):
+        self.guardar_png(d.TITULO_JUEGO, 2000, 400)
+        ancho, alto = self.dibujar_escena()._titulo.get_size()
+        self.assertLessEqual(ancho, TITULO_MAX[0])
+        self.assertLessEqual(alto, TITULO_MAX[1])
+        self.assertAlmostEqual(ancho / alto, 5.0, delta=0.05)
+
+    def test_titulo_chico_se_dibuja_a_su_tamano(self):
+        self.guardar_png(d.TITULO_JUEGO, 600, 100)
+        self.assertEqual(self.dibujar_escena()._titulo.get_size(), (600, 100))
+
+    def test_los_triangulos_quedan_a_margen_fijo_del_texto(self):
+        # El PNG tiene espacio vacío; aun así cada triángulo debe quedar a MARGEN del texto.
+        self.guardar_png(d.TRIANGULOS_SELECTOR, 700, 90, self.triangulos)
+        escena = self.dibujar_escena()
+        izquierdo, derecho = escena._triangulos
+        self.assertLess(izquierdo.get_width(), 100)       # recortado: ya no tiene los ~350 px de la mitad
+        self.assertLess(derecho.get_width(), 100)
+
+        lienzo = pygame.Surface((1600, 900), pygame.SRCALPHA)
+        texto = pygame.Rect(700, 400, 200, 60)
+        escena._marcar_opcion(lienzo, texto)
+        izq = lienzo.subsurface((0, 0, texto.left, 900)).get_bounding_rect()
+        der = lienzo.subsurface((texto.right, 0, 1600 - texto.right, 900)).get_bounding_rect()
+        self.assertEqual(izq.right, texto.left - MARGEN_TRIANGULOS)
+        self.assertEqual(der.left, MARGEN_TRIANGULOS)
+
+    def test_el_selector_completo_se_dibuja_con_las_imagenes(self):
+        self.guardar_png(d.TITULO_JUEGO, 900, 160)
+        self.guardar_png(d.TRIANGULOS_SELECTOR, 700, 90, self.triangulos)
+        escena = self.dibujar_escena()
+        self.assertIsNotNone(escena._titulo)
+        self.assertIsNotNone(escena._triangulos)
+        for _ in range(3):                                # y con cualquier opción elegida
+            self.juego.escena.manejar_evento(tecla(aj.TECLA_ABAJO))
+            self.dibujar_escena()
 
 
 class HumoTest(unittest.TestCase):

@@ -84,6 +84,10 @@ class Recursos:
             self._imagenes[nombre] = imagen
         return imagen
 
+    def existe(self, nombre):
+        """True si el archivo está en assets/. Sirve para las imágenes opcionales."""
+        return (aj.DIR_ASSETS / nombre).is_file()
+
     def dibujar(self, lienzo, nombre, x, y):
         """Dibuja una imagen con su esquina inferior izquierda en la celda (x, y).
 
