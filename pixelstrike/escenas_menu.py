@@ -48,25 +48,24 @@ class SelectorDificultad(Escena):
 
     def dibujar(self, lienzo):
         recursos.dibujar_fondo(lienzo, d.FONDO_SELECTOR_DIFICULTAD)
-        if self._velo is None:
-            self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
-            self._velo.fill((0, 0, 0, 150))
-        lienzo.blit(self._velo, (0, 0))
+        # if self._velo is None:
+        #     self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
+        #     self._velo.fill((0, 0, 0, 150))          genera un efecto de oscurecimiento del fondo pero no queda bien con la imagen actual
+        # lienzo.blit(self._velo, (0, 0))  
 
         centro = aj.ANCHO // 2
-        recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
-        recursos.texto(lienzo, "Elegí la dificultad", 52, BLANCO, centro, 270)
+        recursos.texto(lienzo, "Elije la dificultad", 42, BLANCO, centro, 270)
         for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
             y = 370 + i * 100
             if i == self.indice:
-                caja = pygame.Rect(0, 0, 560, 84)
-                caja.center = (centro, y + 31)
-                pygame.draw.rect(lienzo, DORADO, caja, 4, border_radius=14)
-                recursos.texto(lienzo, dificultad.nombre.upper(), 72, DORADO, centro, y)
+                caja = pygame.Rect(0, 0, 420, 80)
+                caja.center = (centro, y + 24)
+                pygame.draw.rect(lienzo, DORADO, caja, 4)
+                recursos.texto(lienzo, dificultad.nombre.upper(), 50, DORADO, centro, y)
             else:
-                recursos.texto(lienzo, dificultad.nombre.upper(), 64, GRIS_CLARO, centro, y + 4)
-        recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 38, BLANCO, centro, 710)
-        recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 32, GRIS_CLARO, centro, 810)
+                recursos.texto(lienzo, dificultad.nombre.upper(), 40, GRIS_CLARO, centro, y + 4)
+        recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 32, BLANCO, centro, 710)
+        recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 32, GRIS_CLARO, centro, 830)
         self.dibujar_indicadores(lienzo)
 
 
@@ -160,7 +159,7 @@ class SelectorNiveles(Escena):
         personaje = d.PERSONAJES[self.juego.progreso.personaje]
         recursos.dibujar(lienzo, personaje.skin, self.x, self.y)
         recursos.texto(lienzo, f"Dificultad: {self.juego.progreso.dificultad_actual().nombre}   (Esc: cambiar)",
-                       30, BLANCO, aj.ANCHO - 330, 14)
+                       30, BLANCO, aj.ANCHO - 260, 14)
         self.dibujar_indicadores(lienzo)
 
 

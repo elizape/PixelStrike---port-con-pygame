@@ -102,7 +102,7 @@ class Recursos:
         """Usa assets/fuente.ttf si existe (ideal una fuente píxel); si no, la fuente por defecto."""
         fuente = self._fuentes.get(tam)
         if fuente is None:
-            ruta = aj.DIR_ASSETS / "fuente.ttf"
+            ruta = aj.DIR_ASSETS / "fuente(2).ttf"
             if not pygame.font.get_init():
                 pygame.font.init()
             fuente = pygame.font.Font(str(ruta) if ruta.is_file() else None, tam)
