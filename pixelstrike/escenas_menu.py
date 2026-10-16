@@ -85,7 +85,7 @@ class SelectorDificultad(Escena):
 
     def _marcar_opcion(self, lienzo, texto):
         """Marca la opción elegida: un triángulo a cada lado del texto, o un recuadro dorado."""
-        centro_y = texto.top + round(TAM_OPCION_ELEGIDA)     # centro visual de las mayúsculas
+        centro_y = texto.centery      # `texto` es el rectángulo visible: ya está centrado en las mayúsculas
         if self._triangulos is None:
             caja = pygame.Rect(0, 0, 560, 84)
             caja.center = (texto.centerx, centro_y)
