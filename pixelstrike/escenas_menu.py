@@ -15,7 +15,7 @@ BLANCO = (255, 255, 255)
 TITULO_CENTRO_Y = 150          # centro vertical del título (imagen o texto)
 TITULO_MAX = (1400, 230)       # si la imagen del título es más grande, se reduce a este tamaño
 OPCION_Y0, OPCION_PASO = 370, 100
-TAM_OPCION_ELEGIDA = 72
+TAM_OPCION_ELEGIDA = 52
 MARGEN_TRIANGULOS = 30         # separación entre cada triángulo y el texto de la opción
 
 
@@ -49,12 +49,13 @@ class SelectorDificultad(Escena):
         if recursos.existe(d.TRIANGULOS_SELECTOR):
             imagen = recursos.imagen(d.TRIANGULOS_SELECTOR)
             ancho, alto = imagen.get_size()
+            mitad_ancho = ancho // 2
             # El PNG se parte por la mitad: cada triángulo se acomoda a un lado del texto,
             # sin importar cuánto mida la palabra. Cada mitad se recorta a lo que realmente
             # dibuja, así el margen con el texto es siempre MARGEN_TRIANGULOS aunque el PNG
             # tenga espacio vacío alrededor.
-            self._triangulos = (self._recortar(imagen.subsurface((0, 0, ancho // 2, alto))),
-                                self._recortar(imagen.subsurface((ancho // 2, 0, ancho - ancho // 2, alto))))
+            self._triangulos = (self._recortar(imagen.subsurface((0, 0, mitad_ancho, alto))),
+                                self._recortar(imagen.subsurface((mitad_ancho, 0, ancho - mitad_ancho, alto))))
 
     @staticmethod
     def _recortar(superficie):
@@ -104,9 +105,17 @@ class SelectorDificultad(Escena):
         if not self._adornos_listos:
             self._preparar_adornos()
         recursos.dibujar_fondo(lienzo, d.FONDO_SELECTOR_DIFICULTAD)
+        if self._velo is None:
+            self._velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
+            self._velo.fill((0, 0, 0, 90))
+        lienzo.blit(self._velo, (0, 0))  
 
         centro = aj.ANCHO // 2
-        recursos.texto(lienzo, "Elije la dificultad", 52, BLANCO, centro, 270)
+        if self._titulo is not None:
+            lienzo.blit(self._titulo, self._titulo.get_rect(center=(centro, TITULO_CENTRO_Y)))
+        else:
+            recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
+        recursos.texto(lienzo, "Elegí la dificultad", 42, BLANCO, centro, 270)
         for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
             y = OPCION_Y0 + i * OPCION_PASO
             if i == self.indice:
