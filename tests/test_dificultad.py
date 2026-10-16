@@ -273,7 +273,7 @@ class AdornosSelectorTest(unittest.TestCase):
         lienzo = pygame.Surface((1600, 900), pygame.SRCALPHA)
         texto = pygame.Rect(700, 400, 200, 60)
         escena._marcar_opcion(lienzo, texto)
-        borde = (texto.centerx - 279, texto.top + round(72 * 0.43))
+        borde = (texto.centerx - 279, texto.centery)
         self.assertEqual(tuple(lienzo.get_at(borde))[:3], DORADO)
 
     def test_titulo_grande_se_reduce_conservando_la_proporcion(self):
@@ -302,6 +302,28 @@ class AdornosSelectorTest(unittest.TestCase):
         der = lienzo.subsurface((texto.right, 0, 1600 - texto.right, 900)).get_bounding_rect()
         self.assertEqual(izq.right, texto.left - MARGEN_TRIANGULOS)
         self.assertEqual(der.left, MARGEN_TRIANGULOS)
+
+    def test_los_triangulos_son_simetricos_para_cada_dificultad(self):
+        # Cada palabra tiene letras con distinto espacio lateral (F vs L, N vs L...):
+        # la distancia se mide contra lo que se VE del texto, no contra su caja.
+        self.guardar_png(d.TRIANGULOS_SELECTOR, 700, 90, self.triangulos)
+        escena = self.dibujar_escena()
+        for dificultad in d.ORDEN_DIFICULTADES:
+            with self.subTest(dificultad=dificultad.nombre):
+                solo_texto = pygame.Surface((1600, 900), pygame.SRCALPHA)
+                visible = recursos.texto(solo_texto, dificultad.nombre.upper(), 52, DORADO, 800, 400,
+                                         sombra=None)
+                real = solo_texto.get_bounding_rect()
+                self.assertEqual(visible.left, real.left)
+                self.assertEqual(visible.right, real.right)
+                con_marca = pygame.Surface((1600, 900), pygame.SRCALPHA)
+                escena._marcar_opcion(con_marca, visible)
+                izq = con_marca.subsurface((0, 0, visible.left, 900)).get_bounding_rect()
+                der = con_marca.subsurface((visible.right, 0, 1600 - visible.right, 900)).get_bounding_rect()
+                self.assertEqual(visible.left - izq.right, MARGEN_TRIANGULOS)
+                self.assertEqual(der.left, MARGEN_TRIANGULOS)
+                self.assertEqual(izq.centery, der.centery)
+                self.assertAlmostEqual(izq.centery, visible.centery, delta=1)
 
     def test_el_selector_completo_se_dibuja_con_las_imagenes(self):
         self.guardar_png(d.TITULO_JUEGO, 900, 160)

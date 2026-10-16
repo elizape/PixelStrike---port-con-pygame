@@ -114,14 +114,19 @@ class Recursos:
         return fuente
 
     def texto(self, lienzo, texto, tam, color, centro_x, y, sombra=(0, 0, 0)):
-        """Dibuja `texto` centrado en `centro_x` (en píxeles del lienzo), con `y` como borde superior."""
+        """Dibuja `texto` centrado en `centro_x` (en píxeles del lienzo), con `y` como borde superior.
+
+        Devuelve el rectángulo de lo que se ve (sin el espacio lateral que cada letra
+        reserva en la fuente), para poder alinear otras cosas exactamente contra el texto.
+        """
         fuente = self.fuente(tam)
         imagen = fuente.render(texto, True, color)
         x = centro_x - imagen.get_width() // 2
         if sombra:
             lienzo.blit(fuente.render(texto, True, sombra), (x + max(2, tam // 14), y + max(2, tam // 14)))
         lienzo.blit(imagen, (x, y))
-        return imagen.get_rect(topleft=(x, y))
+        visible = imagen.get_bounding_rect()
+        return visible.move(x, y)
 
     # --- internos -------------------------------------------------------
     def _avisar_faltante(self, nombre):
