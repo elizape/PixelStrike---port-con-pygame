@@ -10,11 +10,15 @@ from .entrada import TeclasRepetibles
 from .escena import Escena
 from .interfaz import dibujar_barra_powerups, dibujar_barra_vida
 from .jefe import JefeFinal
+from .particulas import SistemaParticulas
 from .recursos import recursos
 from .temporizador import Planificador
 
 # Estados del nivel
 CARGANDO, JUGANDO, PAUSA, VICTORIA, DERROTA = range(5)
+
+# Partículas de muerte
+CANTIDAD_ENEMIGO, CANTIDAD_JUGADOR, CANTIDAD_JEFE = 18, 32, 40
 
 
 class EscenaNivel(Escena):
@@ -30,6 +34,7 @@ class EscenaNivel(Escena):
         self.enemigos = []
         self.balas = []
         self.items = []
+        self.particulas = SistemaParticulas()
         self.jefe = JefeFinal(self, self.dificultad) if self.datos.tipo == "jefe" else None
         self.estado = CARGANDO
         self.paso_tutorial = 0
@@ -115,6 +120,8 @@ class EscenaNivel(Escena):
     # ========================================================================
     def actualizar(self, dt):
         super().actualizar(dt)
+        if self.estado != PAUSA:                 # siguen animándose en victoria/derrota
+            self.particulas.actualizar(dt)
         self.teclas.actualizar(dt)
         if self.estado != JUGANDO:
             return
@@ -156,6 +163,7 @@ class EscenaNivel(Escena):
         return None
 
     def enemigo_muerto(self, enemigo):
+        self.particulas.emitir_en_celda(enemigo.x, enemigo.y, enemigo.tipo.color_muerte, CANTIDAD_ENEMIGO)
         if enemigo.powerup:
             self.items.append(ItemPowerUp(enemigo.powerup, enemigo.x, enemigo.y))
 
@@ -164,6 +172,10 @@ class EscenaNivel(Escena):
         self.jugador.recibir_danio(self.dificultad.danio_escape)
 
     def jefe_derrotado(self):
+        # Una explosión grande en varias tandas sobre el cuerpo de Kratos
+        for i in range(4):
+            self.ui.despues(0.12 * i, lambda: self.particulas.emitir_en_celda(
+                self.jefe.x + 0.5, self.jefe.y + 1, d.KRATOS.color_muerte, CANTIDAD_JEFE, dispersion=70))
         self.ui.despues(0.05, self._victoria)
 
     # ========================================================================
@@ -262,6 +274,8 @@ class EscenaNivel(Escena):
 
     def _derrota(self):
         self.estado = DERROTA
+        self.particulas.emitir_en_celda(self.jugador.x, self.jugador.y,
+                                        self.personaje.color_muerte, CANTIDAD_JUGADOR, dispersion=15)
         self.ui.despues(0.04, self._mostrar_derrota)
         self.ui.despues(2.0, lambda: recursos.reproducir(d.SFX_DERROTA_2))
         self.ui.despues(4.0, lambda: self.mostrar(d.REINICIAR))
@@ -294,6 +308,7 @@ class EscenaNivel(Escena):
         self.jugador.dibujar(lienzo)
         for bala in self.balas:
             bala.dibujar(lienzo)
+        self.particulas.dibujar(lienzo)
         if self.jefe:
             self.jefe.dibujar_aire(lienzo)
             self.jefe.dibujar_barra_vida(lienzo)
