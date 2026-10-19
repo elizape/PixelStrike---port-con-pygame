@@ -45,9 +45,9 @@ class DatosPersonaje:
     altura_muerte: float = 0.0              # celdas que se suben las partículas (el sprite sobresale de la celda)
 
 
-BYTE_HUNTER = DatosPersonaje("byteHunter", "byteHunter.png", 100, FUSIL, "tarjetaJugador(1).png", (60, 140, 255))
-JADE = DatosPersonaje("jade", "jade.png", 100, PISTOLA_PLASMA, "tarjetaJugador(2).png", (140, 255, 150))
-KRATOS = DatosPersonaje("kratos", "finalBossReverse(1).png", 150, BOLA_FUEGO_KRATOS_JUGABLE, "tarjetaJugador(3).png", (220, 30, 30))
+BYTE_HUNTER = DatosPersonaje("byteHunter", "byteHunter.png", 100, FUSIL, "tarjetaJugador(1).png", (60, 140, 255), 1.75)
+JADE = DatosPersonaje("jade", "jade.png", 100, PISTOLA_PLASMA, "tarjetaJugador(2).png", (140, 255, 150), 1.75)
+KRATOS = DatosPersonaje("kratos", "finalBossReverse(1).png", 150, BOLA_FUEGO_KRATOS_JUGABLE, "tarjetaJugador(3).png", (220, 30, 30), 1.75)
 
 ORDEN_PERSONAJES = (BYTE_HUNTER, JADE, KRATOS)
 PERSONAJES = {p.clave: p for p in ORDEN_PERSONAJES}
@@ -71,8 +71,8 @@ class DatosEnemigo:
 # Altura (en celdas) a la que nacen las partículas del jefe, contando desde su celda.
 JEFE_ALTURA_MUERTE = 1.0
 
-ALIEN_RAPTOR = DatosEnemigo("alienRaptorArma(1).png", 20, FUSIL_ALIEN, (0.75, 2.0), (255, 105, 180))
-CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75), (20, 120, 50))
+ALIEN_RAPTOR = DatosEnemigo("alienRaptorArma(1).png", 20, FUSIL_ALIEN, (0.75, 2.0), (255, 105, 180), 1.75)
+CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75), (20, 120, 50), 1.75)
 
 
 # ============================================================================
