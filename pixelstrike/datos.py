@@ -42,6 +42,7 @@ class DatosPersonaje:
     arma: DatosArma
     tarjeta: str
     color_muerte: tuple = (255, 255, 255)   # color de las partículas al morir
+    altura_muerte: float = 0.0              # celdas que se suben las partículas (el sprite sobresale de la celda)
 
 
 BYTE_HUNTER = DatosPersonaje("byteHunter", "byteHunter.png", 100, FUSIL, "tarjetaJugador(1).png", (60, 140, 255))
@@ -64,7 +65,11 @@ class DatosEnemigo:
     arma: DatosArma
     intervalo_paso: tuple   # (min, max) segundos que tarda en avanzar una celda
     color_muerte: tuple = (255, 255, 255)
+    altura_muerte: float = 0.0              # celdas que se suben las partículas (el sprite sobresale de la celda)
 
+
+# Altura (en celdas) a la que nacen las partículas del jefe, contando desde su celda.
+JEFE_ALTURA_MUERTE = 1.0
 
 ALIEN_RAPTOR = DatosEnemigo("alienRaptorArma(1).png", 20, FUSIL_ALIEN, (0.75, 2.0), (255, 105, 180))
 CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75), (20, 120, 50))

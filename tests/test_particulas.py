@@ -1,4 +1,5 @@
 """Tests de las partículas de muerte (sin ventana ni audio)."""
+import dataclasses
 import os
 import random
 import sys
@@ -115,6 +116,31 @@ class ParticulasEnElNivelTest(unittest.TestCase):
             if len(escena.particulas) >= CANTIDAD_JEFE * 3:
                 break
         self.assertGreaterEqual(len(escena.particulas), CANTIDAD_JEFE * 2)
+
+    def test_altura_de_las_particulas_por_enemigo(self):
+        escena = self.nivel()
+        for altura in (0.0, 1.5):
+            escena.particulas.particulas.clear()
+            tipo = dataclasses.replace(d.ALIEN_RAPTOR, altura_muerte=altura)
+            enemigo = Enemigo(tipo)
+            enemigo.x, enemigo.y = 20, 5
+            escena.enemigos.append(enemigo)
+            enemigo.recibir_danio(10_000, escena)
+            y_base = 900 - (5 + 0.5 + altura) * 50           # centro de emisión, en píxeles
+            promedio = sum(p.y for p in escena.particulas.particulas) / len(escena.particulas)
+            self.assertAlmostEqual(promedio, y_base, delta=1)
+
+    def test_altura_de_las_particulas_del_jugador(self):
+        personaje = dataclasses.replace(d.JADE, altura_muerte=2.0)
+        juego = Juego()
+        escena = EscenaNivel(juego, "nivel1")
+        escena.personaje = personaje
+        escena.estado = 1
+        escena.jugador.recibir_danio(10_000)
+        escena.actualizar(0)
+        y_base = 900 - (escena.jugador.y + 0.5 + 2.0) * 50
+        promedio = sum(p.y for p in escena.particulas.particulas) / len(escena.particulas)
+        self.assertAlmostEqual(promedio, y_base, delta=20)       # dispersión de 15 px
 
     def test_la_pausa_las_congela_y_siguen_en_derrota(self):
         escena = self.nivel()
