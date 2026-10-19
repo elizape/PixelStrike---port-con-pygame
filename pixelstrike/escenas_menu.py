@@ -1,5 +1,6 @@
 """Pantallas de menú: selector de dificultad, de niveles, de personajes y créditos."""
 import pygame
+import math
 
 from . import ajustes as aj
 from . import datos as d
@@ -7,16 +8,20 @@ from .entrada import TeclasRepetibles
 from .escena import Escena
 from .recursos import recursos
 
-DORADO = (255, 210, 63)
-GRIS_CLARO = (205, 205, 205)
+DORADO = (255, 217, 59)
+GRIS_CLARO = (190, 190, 190)
 BLANCO = (255, 255, 255)
+SOMBRA = (0, 0, 0, 100)  # para dibujar un rectángulo semitransparente detrás del texto
 
 # Diseño del selector de dificultad (píxeles del lienzo de 1600x900)
 TITULO_CENTRO_Y = 150          # centro vertical del título (imagen o texto)
 TITULO_MAX = (1400, 230)       # si la imagen del título es más grande, se reduce a este tamaño
 OPCION_Y0, OPCION_PASO = 370, 100
 TAM_OPCION_ELEGIDA = 52
-MARGEN_TRIANGULOS = 30         # separación entre cada triángulo y el texto de la opción
+MARGEN_TRIANGULOS = 50         # separación entre cada triángulo y el texto de la opción
+
+AMPLITUD_TRIANGULOS = 30        # los triángulos se mueven de un lado a otro, con esta amplitud
+VELOCIDAD_TRIANGULOS = 15.0    # VELOCIDAD ANGULAR = 2 * 3.14159 * FRECUENCIA_OSICLACION  # rad/s
 
 
 class SelectorDificultad(Escena):
@@ -34,6 +39,10 @@ class SelectorDificultad(Escena):
         self._adornos_listos = False
         self._titulo = None            # Surface del título, o None para usar texto
         self._triangulos = None        # (izquierdo, derecho), o None para usar el recuadro dorado
+        self._tiempo = 0.0
+
+    def actualizar(self, dt):
+        self._tiempo += dt
 
     def _preparar_adornos(self):
         """Carga (una sola vez) las imágenes opcionales del título y de los triángulos."""
@@ -92,9 +101,10 @@ class SelectorDificultad(Escena):
             pygame.draw.rect(lienzo, DORADO, caja, 4, border_radius=14)
             return
         izquierdo, derecho = self._triangulos
-        lienzo.blit(izquierdo, (texto.left - MARGEN_TRIANGULOS - izquierdo.get_width(),
-                                centro_y - izquierdo.get_height() // 2))
-        lienzo.blit(derecho, (texto.right + MARGEN_TRIANGULOS, centro_y - derecho.get_height() // 2))
+        
+        empuje = AMPLITUD_TRIANGULOS * (0.5 + 0.5 * math.sin(self._tiempo * VELOCIDAD_TRIANGULOS))
+        lienzo.blit(izquierdo, (texto.left - MARGEN_TRIANGULOS - izquierdo.get_width() + empuje, centro_y - izquierdo.get_height() // 2))
+        lienzo.blit(derecho, (texto.right + MARGEN_TRIANGULOS - 10 - empuje, centro_y - derecho.get_height() // 2))
 
     def _confirmar(self):
         self.juego.progreso.dificultad = d.ORDEN_DIFICULTADES[self.indice].clave
@@ -115,11 +125,11 @@ class SelectorDificultad(Escena):
             lienzo.blit(self._titulo, self._titulo.get_rect(center=(centro, TITULO_CENTRO_Y)))
         else:
             recursos.texto(lienzo, aj.TITULO.upper(), 150, DORADO, centro, 80)
-        recursos.texto(lienzo, "Elegí la dificultad", 42, BLANCO, centro, 270)
+        recursos.texto(lienzo, "Elije la dificultad", 42, BLANCO, centro, 270)
         for i, dificultad in enumerate(d.ORDEN_DIFICULTADES):
             y = OPCION_Y0 + i * OPCION_PASO
             if i == self.indice:
-                texto = recursos.texto(lienzo, dificultad.nombre.upper(), TAM_OPCION_ELEGIDA, DORADO, centro, y)
+                texto = recursos.texto(lienzo, dificultad.nombre.upper(), TAM_OPCION_ELEGIDA, DORADO, centro, y, SOMBRA)
                 self._marcar_opcion(lienzo, texto)
             else:
                 recursos.texto(lienzo, dificultad.nombre.upper(), 40, GRIS_CLARO, centro, y + 4)
@@ -218,7 +228,7 @@ class SelectorNiveles(Escena):
         personaje = d.PERSONAJES[self.juego.progreso.personaje]
         recursos.dibujar(lienzo, personaje.skin, self.x, self.y)
         recursos.texto(lienzo, f"Dificultad: {self.juego.progreso.dificultad_actual().nombre}   (Esc: cambiar)",
-                       30, BLANCO, aj.ANCHO - 260, 14)
+                       30, BLANCO, aj.ANCHO - 340, 14)
         self.dibujar_indicadores(lienzo)
 
 

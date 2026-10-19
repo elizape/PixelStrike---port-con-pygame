@@ -266,6 +266,7 @@ NIVELES = {
                          powerup="defensa", enemigo_con_powerup=4, banner=BANNER_NIVEL_3),
     "nivel4": DatosNivel("nivel4", "nivelFinalSong(1).mp3", "FondoJuegoNivelFinal.png",
                          tipo="jefe", personaje=KRATOS.clave),
+    "nivel_Pruebas": DatosNivel("nivel3", "", "FondoJuego(3).png",aliens=1, crawlers=1, spawn_min=4, spawn_max=4, powerup="danio", enemigo_con_powerup=1, banner=BANNER_NIVEL_1),
 }
 
 # Puertas del selector de niveles: (columna, clave del nivel). Todas en la fila 3.
