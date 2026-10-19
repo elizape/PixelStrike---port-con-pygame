@@ -88,6 +88,7 @@ pixelstrike/
   escena_nivel.py          tutorial, hordas y nivel del jefe
   escenas_menu.py          selector de dificultad, de niveles, de personajes, créditos
   particulas.py            partículas de muerte
+  temblor.py               screen shake según el daño recibido
   progreso.py              niveles, personajes desbloqueados y dificultad elegida
   juego.py                 ventana, bucle principal, cambio de escenas
 tests/                     tests sin ventana (unittest)
@@ -109,6 +110,7 @@ docs/                      documentos de diseño
 ## Cambios respecto al original
 
 - **Partículas de muerte** con el color de cada personaje (Byte Hunter azul, Jade verde claro, Kratos rojo, Alien Raptor rosa, Crawler verde oscuro). Los colores están en `datos.py` (`color_muerte`).
+- **Screen shake** cuando una bala enemiga te pega o un enemigo se escapa: sacude el juego (no la interfaz), con más fuerza y duración cuanto más daño, y se congela en pausa. Los valores están en `pixelstrike/temblor.py`.
 - **Selector de dificultad** al iniciar (Fácil / Normal / Difícil), que no existía en el original.
 - **Pausa real**: los temporizadores del juego (spawns, ataques del jefe, power ups) se congelan en pausa.
 - **Música en loop** (en Wollok sonaba una sola vez).

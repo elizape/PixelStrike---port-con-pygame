@@ -92,6 +92,7 @@ class BalaEnemigo(Bala):
         if (jugador.x, jugador.y) != (self.x, self.y):
             return False
         recursos.reproducir_al_azar(d.SONIDOS_IMPACTO)
+        nivel.sacudir(self.danio * jugador.defensa)
         jugador.recibir_danio(self.danio)
         return True
 

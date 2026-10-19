@@ -12,6 +12,7 @@ from .interfaz import dibujar_barra_powerups, dibujar_barra_vida
 from .jefe import JefeFinal
 from .particulas import SistemaParticulas
 from .recursos import recursos
+from .temblor import Temblor
 from .temporizador import Planificador
 
 # Estados del nivel
@@ -35,6 +36,8 @@ class EscenaNivel(Escena):
         self.balas = []
         self.items = []
         self.particulas = SistemaParticulas()
+        self.temblor = Temblor()
+        self._mundo = None             # superficie donde se dibuja el juego mientras tiembla
         self.jefe = JefeFinal(self, self.dificultad) if self.datos.tipo == "jefe" else None
         self.estado = CARGANDO
         self.paso_tutorial = 0
@@ -122,6 +125,7 @@ class EscenaNivel(Escena):
         super().actualizar(dt)
         if self.estado != PAUSA:                 # siguen animándose en victoria/derrota
             self.particulas.actualizar(dt)
+            self.temblor.actualizar(dt)          # en pausa se congela
         self.teclas.actualizar(dt)
         if self.estado != JUGANDO:
             return
@@ -168,8 +172,13 @@ class EscenaNivel(Escena):
         if enemigo.powerup:
             self.items.append(ItemPowerUp(enemigo.powerup, enemigo.x, enemigo.y))
 
+    def sacudir(self, danio):
+        """Hace temblar el juego (no la interfaz) según el daño que se acaba de recibir."""
+        self.temblor.sacudir(danio)
+
     def enemigo_escapo(self, enemigo):
         enemigo.activo = False
+        self.sacudir(self.dificultad.danio_escape * self.jugador.defensa)
         self.jugador.recibir_danio(self.dificultad.danio_escape)
 
     def jefe_derrotado(self):
@@ -296,6 +305,18 @@ class EscenaNivel(Escena):
     # Dibujo (de atrás hacia adelante)
     # ========================================================================
     def dibujar(self, lienzo):
+        if not self.temblor.activo or self.estado == PAUSA:     # en pausa no se ve desplazado
+            self._dibujar_juego(lienzo)
+        else:
+            # El juego se dibuja aparte y se copia desplazado; la interfaz va después, quieta.
+            if self._mundo is None:
+                self._mundo = pygame.Surface((aj.ANCHO, aj.ALTO))
+            self._dibujar_juego(self._mundo)
+            lienzo.blit(self._mundo, (0, 0))              # cubre los bordes que deja el desplazamiento
+            lienzo.blit(self._mundo, self.temblor.desplazamiento)
+        self._dibujar_interfaz(lienzo)
+
+    def _dibujar_juego(self, lienzo):
         recursos.dibujar_fondo(lienzo, self.datos.fondo)
         recursos.dibujar(lienzo, d.MARCA_CAMINO, 0, self.jugador.y)
         if self.jefe:
@@ -312,6 +333,9 @@ class EscenaNivel(Escena):
         self.particulas.dibujar(lienzo)
         if self.jefe:
             self.jefe.dibujar_aire(lienzo)
+
+    def _dibujar_interfaz(self, lienzo):
+        if self.jefe:
             self.jefe.dibujar_barra_vida(lienzo)
         dibujar_barra_vida(lienzo, self.jugador.vida, self.jugador.vida_max, 0, 17, d.CORAZON_ROJO)
         dibujar_barra_powerups(lienzo, self.jugador)
