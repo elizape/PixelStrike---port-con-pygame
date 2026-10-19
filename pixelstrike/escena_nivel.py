@@ -163,7 +163,8 @@ class EscenaNivel(Escena):
         return None
 
     def enemigo_muerto(self, enemigo):
-        self.particulas.emitir_en_celda(enemigo.x, enemigo.y, enemigo.tipo.color_muerte, CANTIDAD_ENEMIGO)
+        self.particulas.emitir_en_celda(enemigo.x, enemigo.y + enemigo.tipo.altura_muerte,
+                                        enemigo.tipo.color_muerte, CANTIDAD_ENEMIGO)
         if enemigo.powerup:
             self.items.append(ItemPowerUp(enemigo.powerup, enemigo.x, enemigo.y))
 
@@ -175,7 +176,7 @@ class EscenaNivel(Escena):
         # Una explosión grande en varias tandas sobre el cuerpo de Kratos
         for i in range(4):
             self.ui.despues(0.12 * i, lambda: self.particulas.emitir_en_celda(
-                self.jefe.x + 0.5, self.jefe.y + 1, d.KRATOS.color_muerte, CANTIDAD_JEFE, dispersion=70))
+                self.jefe.x + 0.5, self.jefe.y + d.JEFE_ALTURA_MUERTE, d.KRATOS.color_muerte, CANTIDAD_JEFE, dispersion=70))
         self.ui.despues(0.05, self._victoria)
 
     # ========================================================================
@@ -274,7 +275,7 @@ class EscenaNivel(Escena):
 
     def _derrota(self):
         self.estado = DERROTA
-        self.particulas.emitir_en_celda(self.jugador.x, self.jugador.y,
+        self.particulas.emitir_en_celda(self.jugador.x, self.jugador.y + self.personaje.altura_muerte,
                                         self.personaje.color_muerte, CANTIDAD_JUGADOR, dispersion=15)
         self.ui.despues(0.04, self._mostrar_derrota)
         self.ui.despues(2.0, lambda: recursos.reproducir(d.SFX_DERROTA_2))
