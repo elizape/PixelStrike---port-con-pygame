@@ -235,6 +235,10 @@ class FlujoDeEscenasTest(unittest.TestCase):
         self.assertIs(self.juego.escena.dificultad, d.DIFICIL)
 
 
+# El triángulo derecho se acerca 10 px más (ajuste óptico por la fuente), ver _marcar_opcion.
+CORRECCION_DERECHA = 10
+
+
 class AdornosSelectorTest(unittest.TestCase):
     """Título y triángulos opcionales. Se prueban con una carpeta de assets temporal."""
 
@@ -308,7 +312,7 @@ class AdornosSelectorTest(unittest.TestCase):
         izq = lienzo.subsurface((0, 0, texto.left, 900)).get_bounding_rect()
         der = lienzo.subsurface((texto.right, 0, 1600 - texto.right, 900)).get_bounding_rect()
         self.assertEqual(izq.right, texto.left - MARGEN_TRIANGULOS)
-        self.assertEqual(der.left, MARGEN_TRIANGULOS)
+        self.assertEqual(der.left, MARGEN_TRIANGULOS - CORRECCION_DERECHA)
 
     def test_los_triangulos_son_simetricos_para_cada_dificultad(self):
         # Cada palabra tiene letras con distinto espacio lateral (F vs L, N vs L...):
@@ -329,7 +333,7 @@ class AdornosSelectorTest(unittest.TestCase):
                 izq = con_marca.subsurface((0, 0, visible.left, 900)).get_bounding_rect()
                 der = con_marca.subsurface((visible.right, 0, 1600 - visible.right, 900)).get_bounding_rect()
                 self.assertEqual(visible.left - izq.right, MARGEN_TRIANGULOS)
-                self.assertEqual(der.left, MARGEN_TRIANGULOS)
+                self.assertEqual(der.left, MARGEN_TRIANGULOS - CORRECCION_DERECHA)
                 self.assertEqual(izq.centery, der.centery)
                 self.assertAlmostEqual(izq.centery, visible.centery, delta=1)
 
