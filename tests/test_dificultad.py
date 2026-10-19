@@ -2,6 +2,7 @@
 
     python -m unittest discover -s tests -v
 """
+import math
 import os
 import random
 import shutil
@@ -22,7 +23,7 @@ from pixelstrike import datos as d  # noqa: E402
 from pixelstrike.entidades import Enemigo, Jugador  # noqa: E402
 from pixelstrike.escena_nivel import EscenaNivel  # noqa: E402
 from pixelstrike.escenas_menu import (  # noqa: E402
-    DORADO, MARGEN_TRIANGULOS, TITULO_MAX, SelectorDificultad, SelectorNiveles)
+    DORADO, MARGEN_TRIANGULOS, TITULO_MAX, VELOCIDAD_TRIANGULOS, SelectorDificultad, SelectorNiveles)
 from pixelstrike.jefe import JefeFinal  # noqa: E402
 from pixelstrike.juego import Juego  # noqa: E402
 from pixelstrike.recursos import recursos  # noqa: E402
@@ -266,6 +267,11 @@ class AdornosSelectorTest(unittest.TestCase):
         self.juego.escena.dibujar(self.lienzo)
         return self.juego.escena
 
+    @staticmethod
+    def sin_empuje(escena):
+        """Congela la animación en el instante en que los triángulos están en su posición base."""
+        escena._tiempo = 1.5 * math.pi / VELOCIDAD_TRIANGULOS      # sin(...) = -1  ->  empuje = 0
+
     def test_sin_imagenes_se_usa_texto_y_recuadro(self):
         escena = self.dibujar_escena()
         self.assertIsNone(escena._titulo)
@@ -291,6 +297,7 @@ class AdornosSelectorTest(unittest.TestCase):
         # El PNG tiene espacio vacío; aun así cada triángulo debe quedar a MARGEN del texto.
         self.guardar_png(d.TRIANGULOS_SELECTOR, 700, 90, self.triangulos)
         escena = self.dibujar_escena()
+        self.sin_empuje(escena)
         izquierdo, derecho = escena._triangulos
         self.assertLess(izquierdo.get_width(), 100)       # recortado: ya no tiene los ~350 px de la mitad
         self.assertLess(derecho.get_width(), 100)
@@ -308,6 +315,7 @@ class AdornosSelectorTest(unittest.TestCase):
         # la distancia se mide contra lo que se VE del texto, no contra su caja.
         self.guardar_png(d.TRIANGULOS_SELECTOR, 700, 90, self.triangulos)
         escena = self.dibujar_escena()
+        self.sin_empuje(escena)
         for dificultad in d.ORDEN_DIFICULTADES:
             with self.subTest(dificultad=dificultad.nombre):
                 solo_texto = pygame.Surface((1600, 900), pygame.SRCALPHA)
