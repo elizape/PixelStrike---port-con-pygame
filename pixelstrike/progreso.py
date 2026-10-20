@@ -76,6 +76,12 @@ class Progreso:
     def info_xp(self) -> dict:
         return calcular_nivel_xp(self.xp_total)
 
+    @property
+    def hay_progreso(self) -> bool:
+        """True si cambiar de dificultad haría perder algo (niveles, personajes, XP o récords)."""
+        return bool(self.niveles - {"nivel0"} or self.personajes - {d.PERSONAJE_INICIAL}
+                    or self.xp_total or self.puntajes)
+
     def dificultad_actual(self):
         return d.DIFICULTADES[self.dificultad]
 

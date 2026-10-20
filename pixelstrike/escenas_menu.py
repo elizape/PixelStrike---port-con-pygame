@@ -41,6 +41,7 @@ class SelectorDificultad(Escena):
         self._titulo = None            # Surface del título, o None para usar texto
         self._triangulos = None        # (izquierdo, derecho), o None para usar el recuadro dorado
         self._tiempo = 0.0
+        self.confirmando_cambio = False   # cartel "se borrara el progreso" abierto
 
     def actualizar(self, dt):
         self._tiempo += dt
@@ -80,6 +81,13 @@ class SelectorDificultad(Escena):
         if evento.type != pygame.KEYDOWN:
             return
         tecla = evento.key
+        if self.confirmando_cambio:
+            if tecla in aj.TECLAS_ENTER:
+                self._aplicar_cambio()
+            elif tecla in (aj.TECLA_VOLVER, pygame.K_n):
+                self.confirmando_cambio = False
+                recursos.reproducir(d.SFX_CLICK)
+            return
         if tecla in (aj.TECLA_ARRIBA, aj.TECLA_IZQUIERDA):
             self._mover(-1)
         elif tecla in (aj.TECLA_ABAJO, aj.TECLA_DERECHA):
@@ -108,6 +116,17 @@ class SelectorDificultad(Escena):
         lienzo.blit(derecho, (texto.right + MARGEN_TRIANGULOS - 10 - empuje, centro_y - derecho.get_height() // 2))
 
     def _confirmar(self):
+        progreso = self.juego.progreso
+        nueva = d.ORDEN_DIFICULTADES[self.indice].clave
+        if nueva != progreso.dificultad and progreso.hay_progreso:
+            # Cambiar de dificultad borra el progreso: antes se pide confirmación
+            self.confirmando_cambio = True
+            recursos.reproducir(d.SFX_CLICK)
+            return
+        self._aplicar_cambio()
+
+    def _aplicar_cambio(self):
+        self.confirmando_cambio = False
         nueva = d.ORDEN_DIFICULTADES[self.indice].clave
         self.juego.progreso.cambiar_dificultad(nueva)
         recursos.reproducir(d.SFX_CLICK)
@@ -147,7 +166,25 @@ class SelectorDificultad(Escena):
         recursos.texto(lienzo, self.TEXTO_AVISO, 22, (255, 150, 150), centro, caja_cartel.centery)
 
         recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 28, GRIS_CLARO, centro, 835)
+        if self.confirmando_cambio:
+            self._dibujar_confirmacion(lienzo)
         self.dibujar_indicadores(lienzo)
+
+    def _dibujar_confirmacion(self, lienzo):
+        """Cartel que aparece antes de cambiar de dificultad si hay progreso que se perdería."""
+        velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
+        velo.fill((0, 0, 0, 200))
+        lienzo.blit(velo, (0, 0))
+        centro = aj.ANCHO // 2
+        caja = pygame.Rect(0, 0, 1000, 340)
+        caja.center = (centro, aj.ALTO // 2)
+        pygame.draw.rect(lienzo, (35, 20, 25), caja, border_radius=14)
+        pygame.draw.rect(lienzo, (220, 70, 70), caja, 4, border_radius=14)
+        nueva = d.ORDEN_DIFICULTADES[self.indice].nombre.upper()
+        recursos.texto(lienzo, "ATENCION", 60, (255, 120, 120), centro, caja.top + 30)
+        recursos.texto(lienzo, f"Cambiar a {nueva} borrara todo tu progreso", 34, BLANCO, centro, caja.top + 130)
+        recursos.texto(lienzo, "(niveles, personajes y XP). No se puede deshacer.", 28, GRIS_CLARO, centro, caja.top + 180)
+        recursos.texto(lienzo, "Enter: confirmar        Esc: cancelar", 32, DORADO, centro, caja.top + 255)
 
 
 class SelectorNiveles(Escena):

@@ -231,13 +231,66 @@ class FlujoDeEscenasTest(unittest.TestCase):
         self.assertIsInstance(self.juego.escena, SelectorDificultad)
         self.assertEqual(self.juego.escena.indice, 1)         # arranca en la dificultad actual (Normal)
         self.pulsar(aj.TECLA_IZQUIERDA)                       # elige Fácil
-        self.pulsar(pygame.K_RETURN)
+        self.pulsar(pygame.K_RETURN)                          # pide confirmación
+        self.assertTrue(self.juego.escena.confirmando_cambio)
+        self.pulsar(pygame.K_RETURN)                          # confirma
         self.assertEqual(self.juego.progreso.dificultad, "facil")
         self.assertFalse(self.juego.progreso.nivel_desbloqueado("nivel1"))
         self.assertFalse(self.juego.progreso.personaje_desbloqueado("jade"))
         self.assertEqual(self.juego.progreso.xp_total, 0)
         self.assertEqual(self.juego.progreso.niveles, {"nivel0"})
         self.assertEqual(self.juego.progreso.personajes, {d.PERSONAJE_INICIAL})
+
+    def con_progreso_en_el_selector(self):
+        self.juego.progreso.desbloquear_nivel("nivel1")
+        self.juego.progreso.xp_total = 250
+        self.pulsar(pygame.K_RETURN)                          # Normal -> selector de niveles
+        self.pulsar(aj.TECLA_VOLVER)                          # de vuelta al selector de dificultad
+        return self.juego.escena
+
+    def test_cartel_de_confirmacion_antes_de_cambiar_con_progreso(self):
+        escena = self.con_progreso_en_el_selector()
+        self.pulsar(aj.TECLA_IZQUIERDA)
+        self.pulsar(pygame.K_RETURN)
+        self.assertTrue(escena.confirmando_cambio)
+        self.assertEqual(self.juego.progreso.dificultad, "normal")      # todavía no cambió
+        self.assertTrue(self.juego.progreso.nivel_desbloqueado("nivel1"))
+        self.assertIs(self.juego.escena, escena)                         # sigue en el selector
+        escena.dibujar(self.juego.lienzo)                                # el cartel se dibuja
+
+    def test_esc_o_n_cancelan_el_cambio_y_no_se_pierde_nada(self):
+        for cancelar in (aj.TECLA_VOLVER, pygame.K_n):
+            with self.subTest(tecla=cancelar):
+                self.setUp()
+                escena = self.con_progreso_en_el_selector()
+                self.pulsar(aj.TECLA_IZQUIERDA)
+                self.pulsar(pygame.K_RETURN)
+                self.pulsar(cancelar)
+                self.assertFalse(escena.confirmando_cambio)
+                self.assertIs(self.juego.escena, escena)
+                self.assertEqual(self.juego.progreso.dificultad, "normal")
+                self.assertEqual(self.juego.progreso.xp_total, 250)
+
+    def test_con_el_cartel_abierto_las_otras_teclas_no_hacen_nada(self):
+        escena = self.con_progreso_en_el_selector()
+        self.pulsar(aj.TECLA_IZQUIERDA)
+        self.pulsar(pygame.K_RETURN)
+        self.pulsar(aj.TECLA_ABAJO)
+        self.assertEqual(escena.indice, 0)
+        self.assertTrue(escena.confirmando_cambio)
+
+    def test_sin_progreso_no_hay_cartel(self):
+        self.pulsar(aj.TECLA_ABAJO)                                      # Difícil, partida nueva
+        self.pulsar(pygame.K_RETURN)
+        self.assertIsInstance(self.juego.escena, SelectorNiveles)
+        self.assertEqual(self.juego.progreso.dificultad, "dificil")
+
+    def test_misma_dificultad_con_progreso_no_pide_confirmacion(self):
+        escena = self.con_progreso_en_el_selector()
+        self.pulsar(pygame.K_RETURN)                                     # Normal otra vez
+        self.assertFalse(escena.confirmando_cambio)
+        self.assertIsInstance(self.juego.escena, SelectorNiveles)
+        self.assertEqual(self.juego.progreso.xp_total, 250)
 
     def test_confirmar_misma_dificultad_conserva_el_progreso(self):
         self.juego.progreso.desbloquear_nivel("nivel1")
