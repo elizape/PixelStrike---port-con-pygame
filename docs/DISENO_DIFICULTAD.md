@@ -20,7 +20,7 @@ Fuera de alcance por ahora: guardar progreso o dificultad en disco (hoy `Progres
 | RF-04 | La dificultad elegida afecta a los niveles de hordas (1 a 3) y al jefe (nivel 4) |
 | RF-05 | El tutorial (nivel 0) siempre se juega en Normal, para que las instrucciones no cambien |
 | RF-06 | Se puede volver al selector de dificultad desde el selector de niveles (tecla Esc) para cambiarla |
-| RF-07 | Cambiar la dificultad no borra niveles ni personajes desbloqueados |
+| RF-07 | Cambiar la dificultad borra todos los datos de progreso (niveles, personajes y XP), y se muestra un cartel de aviso al jugador |
 | RF-08 | Reiniciar un nivel (R) o morir conserva la dificultad elegida |
 | RF-09 | La dificultad actual se ve en pantalla en el selector de niveles |
 
@@ -70,6 +70,8 @@ classDiagram
         +int danio_escape
         +float vida_jefe
         +float intervalo_ataques_jefe
+        +float mult_xp_ganada
+        +float mult_xp_perdida
     }
     class Progreso {
         +str dificultad
@@ -111,6 +113,8 @@ Los valores de Normal son los actuales. Los de Fácil y Difícil son una primera
 | `danio_escape` | 10 | 15 | 20 | `enemigo_escapo` |
 | `vida_jefe` | 100 | 150 | 225 | `JefeFinal.VIDA_MAX` |
 | `intervalo_ataques_jefe` | 1,4 s | 1,1 s | 0,8 s | `sim.cada(1.1, ...)` en `comenzar_ataques` |
+| `mult_xp_ganada` | ×0,8 | ×1 | ×1,2 | XP por matar enemigos, rachas, jefe y nivel perfecto |
+| `mult_xp_perdida` | ×1 | ×1 | ×1,2 | XP penalizada al recibir disparos |
 
 Para el daño del jefe: las bolas de fuego usan `mult_danio` a través de su arma y los ataques de área usan `DANIO_FUEGO` (hoy constante del módulo), que también se escalaría.
 

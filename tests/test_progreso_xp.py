@@ -170,6 +170,130 @@ class PuntuacionNivelTest(unittest.TestCase):
         self.assertEqual(self.juego.progreso.puntaje_nivel("nivel1"), 100)
 
 
+class PuntuacionDificultadTest(unittest.TestCase):
+    def setUp(self):
+        self.juego = Juego()
+
+    def nivel(self, clave_dificultad, nivel="nivel1"):
+        self.juego.progreso.dificultad = clave_dificultad
+        return EscenaNivel(self.juego, nivel)
+
+    def test_multiplicadores_dificultad(self):
+        self.assertAlmostEqual(d.FACIL.mult_xp_ganada, 0.8)
+        self.assertAlmostEqual(d.FACIL.mult_xp_perdida, 1.0)
+        self.assertAlmostEqual(d.NORMAL.mult_xp_ganada, 1.0)
+        self.assertAlmostEqual(d.NORMAL.mult_xp_perdida, 1.0)
+        self.assertAlmostEqual(d.DIFICIL.mult_xp_ganada, 1.2)
+        self.assertAlmostEqual(d.DIFICIL.mult_xp_perdida, 1.2)
+
+    def test_facil_disminuye_20_porciento_xp_ganada(self):
+        escena = self.nivel("facil")
+        # Alien: 25 * 0.8 = 20
+        escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.FACIL))
+        self.assertEqual(escena.xp_nivel, 20)
+        self.assertIn("+20 XP (Alien)", [n["texto"] for n in escena._notificaciones_xp])
+
+        # Crawler: 40 * 0.8 = 32 -> 20 + 32 = 52
+        escena.enemigo_muerto(Enemigo(d.CRAWLER, d.FACIL))
+        self.assertEqual(escena.xp_nivel, 52)
+        self.assertIn("+32 XP (Crawler)", [n["texto"] for n in escena._notificaciones_xp])
+
+        # Racha de 3: 20 + bono 10 * 0.8 = 8 -> 52 + 28 = 80
+        escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.FACIL))
+        self.assertEqual(escena.xp_nivel, 80)
+        self.assertIn("¡Racha de 3! +8 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_facil_racha_7_bono_disminuye_20_porciento(self):
+        escena = self.nivel("facil")
+        for _ in range(7):
+            escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.FACIL))
+        # 7 aliens: 20 * 7 = 140 + bono 3 (8) + bono 7 (30 * 0.8 = 24) = 172
+        self.assertEqual(escena.xp_nivel, 172)
+        self.assertIn("¡Racha de 7! +24 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_facil_xp_perdida_queda_fija_respecto_del_nivel_normal(self):
+        escena = self.nivel("facil")
+        escena.xp_nivel = 50
+        escena.disparo_recibido()
+        # Pierde 15 XP (igual que normal)
+        self.assertEqual(escena.xp_nivel, 35)
+        self.assertIn("-15 XP (Disparo recibido)", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_facil_bono_nivel_perfecto_disminuye_20_porciento(self):
+        escena = self.nivel("facil")
+        escena.xp_nivel = 100
+        escena.disparos_recibidos = 0
+        escena._victoria()
+        # 100 + 100 * 0.8 (80) = 180
+        self.assertEqual(escena.xp_nivel, 180)
+        self.assertIn("¡Nivel Perfecto! +80 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_facil_jefe_derrotado_disminuye_20_porciento(self):
+        escena = self.nivel("facil", "nivel4")
+        escena.jefe_derrotado()
+        # 200 * 0.8 = 160
+        self.assertEqual(escena.xp_nivel, 160)
+        self.assertIn("¡Kratos derrotado! +160 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_dificil_aumenta_20_porciento_xp_ganada(self):
+        escena = self.nivel("dificil")
+        # Alien: 25 * 1.2 = 30
+        escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.DIFICIL))
+        self.assertEqual(escena.xp_nivel, 30)
+        self.assertIn("+30 XP (Alien)", [n["texto"] for n in escena._notificaciones_xp])
+
+        # Crawler: 40 * 1.2 = 48 -> 30 + 48 = 78
+        escena.enemigo_muerto(Enemigo(d.CRAWLER, d.DIFICIL))
+        self.assertEqual(escena.xp_nivel, 78)
+        self.assertIn("+48 XP (Crawler)", [n["texto"] for n in escena._notificaciones_xp])
+
+        # Racha de 3: 30 + bono 10 * 1.2 = 12 -> 78 + 42 = 120
+        escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.DIFICIL))
+        self.assertEqual(escena.xp_nivel, 120)
+        self.assertIn("¡Racha de 3! +12 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_dificil_racha_7_bono_aumenta_20_porciento(self):
+        escena = self.nivel("dificil")
+        for _ in range(7):
+            escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR, d.DIFICIL))
+        # 7 aliens: 30 * 7 = 210 + bono 3 (12) + bono 7 (30 * 1.2 = 36) = 258
+        self.assertEqual(escena.xp_nivel, 258)
+        self.assertIn("¡Racha de 7! +36 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_dificil_aumenta_20_porciento_xp_perdida(self):
+        escena = self.nivel("dificil")
+        escena.xp_nivel = 50
+        escena.disparo_recibido()
+        # Pierde 15 * 1.2 = 18 XP -> 50 - 18 = 32
+        self.assertEqual(escena.xp_nivel, 32)
+        self.assertIn("-18 XP (Disparo recibido)", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_dificil_bono_nivel_perfecto_aumenta_20_porciento(self):
+        escena = self.nivel("dificil")
+        escena.xp_nivel = 100
+        escena.disparos_recibidos = 0
+        escena._victoria()
+        # 100 + 100 * 1.2 (120) = 220
+        self.assertEqual(escena.xp_nivel, 220)
+        self.assertIn("¡Nivel Perfecto! +120 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_dificil_jefe_derrotado_aumenta_20_porciento(self):
+        escena = self.nivel("dificil", "nivel4")
+        escena.jefe_derrotado()
+        # 200 * 1.2 = 240
+        self.assertEqual(escena.xp_nivel, 240)
+        self.assertIn("¡Kratos derrotado! +240 XP", [n["texto"] for n in escena._notificaciones_xp])
+
+    def test_tutorial_mantiene_valores_normal_aunque_la_dificultad_elegida_sea_otra(self):
+        # En dificultad difícil, el tutorial sigue usando dificultad Normal
+        escena = self.nivel("dificil", "nivel0")
+        self.assertIs(escena.dificultad, d.NORMAL)
+        escena.enemigo_muerto(Enemigo(d.ALIEN_RAPTOR))
+        self.assertEqual(escena.xp_nivel, 25)  # normal (25)
+        escena.disparo_recibido()
+        self.assertEqual(escena.xp_nivel, 10)  # 25 - 15 = 10 (normal)
+
+
 class GuardadoProgresoTest(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
@@ -214,6 +338,34 @@ class GuardadoProgresoTest(unittest.TestCase):
         self.assertEqual(prog.xp_total, 0)
         self.assertEqual(prog.puntajes, {})
         self.assertEqual(prog.nivel_xp, 1)
+
+    def test_cambiar_dificultad_borra_progreso(self):
+        prog = Progreso(ruta_guardado=self.archivo_guardado, auto_cargar=False)
+        prog.desbloquear_nivel("nivel1")
+        prog.desbloquear_personaje("jade")
+        prog.personaje = "jade"
+        prog.dificultad = "normal"
+        prog.xp_total = 400
+        prog.guardar()
+
+        # Cambiar a una dificultad diferente borra el progreso
+        cambio = prog.cambiar_dificultad("facil")
+        self.assertTrue(cambio)
+        self.assertEqual(prog.dificultad, "facil")
+        self.assertEqual(prog.niveles, {"nivel0"})
+        self.assertEqual(prog.personajes, {d.PERSONAJE_INICIAL})
+        self.assertEqual(prog.personaje, d.PERSONAJE_INICIAL)
+        self.assertEqual(prog.xp_total, 0)
+        self.assertEqual(prog.puntajes, {})
+
+        # Confirmar la misma dificultad no borra el progreso
+        prog.desbloquear_nivel("nivel2")
+        prog.xp_total = 150
+        prog.guardar()
+        cambio2 = prog.cambiar_dificultad("facil")
+        self.assertFalse(cambio2)
+        self.assertTrue(prog.nivel_desbloqueado("nivel2"))
+        self.assertEqual(prog.xp_total, 150)
 
 
 class SelectorNivelesUITest(unittest.TestCase):

@@ -183,8 +183,9 @@ class EscenaNivel(Escena):
     def disparo_recibido(self):
         self.disparos_recibidos += 1
         self.racha_actual = 0
-        self.xp_nivel = max(0, self.xp_nivel - d.XP_PENALIZACION_DISPARO)
-        self._notificar_xp(f"-{d.XP_PENALIZACION_DISPARO} XP (Disparo recibido)", color=(255, 90, 90))
+        penalizacion = round(d.XP_PENALIZACION_DISPARO * self.dificultad.mult_xp_perdida)
+        self.xp_nivel = max(0, self.xp_nivel - penalizacion)
+        self._notificar_xp(f"-{penalizacion} XP (Disparo recibido)", color=(255, 90, 90))
 
     def enemigo_muerto(self, enemigo):
         self.particulas.emitir_en_celda(enemigo.x, enemigo.y + enemigo.tipo.altura_muerte,
@@ -194,25 +195,28 @@ class EscenaNivel(Escena):
 
         self.racha_actual += 1
         if enemigo.tipo == d.ALIEN_RAPTOR:
-            puntos = d.XP_ALIEN
+            base = d.XP_ALIEN
             nombre_enemigo = "Alien"
         elif enemigo.tipo == d.CRAWLER:
-            puntos = d.XP_CRAWLER
+            base = d.XP_CRAWLER
             nombre_enemigo = "Crawler"
         else:
-            puntos = d.XP_ALIEN
+            base = d.XP_ALIEN
             nombre_enemigo = "Enemigo"
 
+        puntos = round(base * self.dificultad.mult_xp_ganada)
         self.xp_nivel += puntos
         self._notificar_xp(f"+{puntos} XP ({nombre_enemigo})")
 
         # Bonificaciones por racha sin recibir disparos
         if self.racha_actual % 7 == 3:
-            self.xp_nivel += d.XP_RACHA_3
-            self._notificar_xp(f"¡Racha de 3! +{d.XP_RACHA_3} XP", color=(255, 217, 59))
+            bono = round(d.XP_RACHA_3 * self.dificultad.mult_xp_ganada)
+            self.xp_nivel += bono
+            self._notificar_xp(f"¡Racha de 3! +{bono} XP", color=(255, 217, 59))
         elif self.racha_actual % 7 == 0 and self.racha_actual > 0:
-            self.xp_nivel += d.XP_RACHA_7
-            self._notificar_xp(f"¡Racha de 7! +{d.XP_RACHA_7} XP", color=(255, 217, 59))
+            bono = round(d.XP_RACHA_7 * self.dificultad.mult_xp_ganada)
+            self.xp_nivel += bono
+            self._notificar_xp(f"¡Racha de 7! +{bono} XP", color=(255, 217, 59))
 
     def sacudir(self, danio):
         """Hace temblar el juego (no la interfaz) según el daño que se acaba de recibir."""
@@ -224,8 +228,9 @@ class EscenaNivel(Escena):
         self.jugador.recibir_danio(self.dificultad.danio_escape)
 
     def jefe_derrotado(self):
-        self.xp_nivel += d.XP_JEFE
-        self._notificar_xp(f"¡Kratos derrotado! +{d.XP_JEFE} XP", color=(255, 217, 59))
+        puntos = round(d.XP_JEFE * self.dificultad.mult_xp_ganada)
+        self.xp_nivel += puntos
+        self._notificar_xp(f"¡Kratos derrotado! +{puntos} XP", color=(255, 217, 59))
         # Una explosión grande en varias tandas sobre el cuerpo de Kratos
         for i in range(4):
             self.ui.despues(0.12 * i, lambda: self.particulas.emitir_en_celda(
@@ -317,8 +322,9 @@ class EscenaNivel(Escena):
             return
         self.bono_perfecto_otorgado = True
         if self.disparos_recibidos == 0:
-            self.xp_nivel += d.XP_NIVEL_PERFECTO
-            self._notificar_xp(f"¡Nivel Perfecto! +{d.XP_NIVEL_PERFECTO} XP", color=(255, 217, 59))
+            bono = round(d.XP_NIVEL_PERFECTO * self.dificultad.mult_xp_ganada)
+            self.xp_nivel += bono
+            self._notificar_xp(f"¡Nivel Perfecto! +{bono} XP", color=(255, 217, 59))
         self.juego.progreso.registrar_puntaje_nivel(self.datos.clave, self.xp_nivel)
 
     def _victoria(self):
@@ -411,6 +417,7 @@ class EscenaNivel(Escena):
         if self.estado == VICTORIA:
             recursos.texto(lienzo, f"XP NIVEL: {self.xp_nivel}", 38, (255, 217, 59), aj.ANCHO // 2, 450)
             if self.disparos_recibidos == 0:
-                recursos.texto(lienzo, f"¡Nivel Perfecto! (+{d.XP_NIVEL_PERFECTO} XP)", 26, (255, 255, 255), aj.ANCHO // 2, 500)
+                bono = round(d.XP_NIVEL_PERFECTO * self.dificultad.mult_xp_ganada)
+                recursos.texto(lienzo, f"¡Nivel Perfecto! (+{bono} XP)", 26, (255, 255, 255), aj.ANCHO // 2, 500)
 
         self.dibujar_indicadores(lienzo)

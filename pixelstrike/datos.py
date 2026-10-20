@@ -98,20 +98,25 @@ class Dificultad:
     danio_escape: int           # daño al jugador si un enemigo cruza la pantalla
     vida_jefe: int
     intervalo_ataques_jefe: float   # segundos entre ataques de Kratos
+    mult_xp_ganada: float = 1.0     # multiplicador de experiencia ganada
+    mult_xp_perdida: float = 1.0    # multiplicador de experiencia perdida
 
 
 FACIL = Dificultad("facil", "Facil",
                    "Enemigos con la mitad de vida, mas lentos y que pegan menos.",
                    mult_vida=0.5, mult_velocidad=0.8, mult_cadencia=1.25, mult_danio=0.5,
-                   mult_spawn=1.25, danio_escape=10, vida_jefe=100, intervalo_ataques_jefe=1.4)
+                   mult_spawn=1.25, danio_escape=10, vida_jefe=100, intervalo_ataques_jefe=1.4,
+                   mult_xp_ganada=0.8, mult_xp_perdida=1.0)
 NORMAL = Dificultad("normal", "Normal",
                     "La experiencia original de Pixel Strike.",
                     mult_vida=1.0, mult_velocidad=1.0, mult_cadencia=1.0, mult_danio=1.0,
-                    mult_spawn=1.0, danio_escape=15, vida_jefe=150, intervalo_ataques_jefe=1.1)
+                    mult_spawn=1.0, danio_escape=15, vida_jefe=150, intervalo_ataques_jefe=1.1,
+                    mult_xp_ganada=1.0, mult_xp_perdida=1.0)
 DIFICIL = Dificultad("dificil", "Dificil",
                      "Enemigos mas resistentes, rapidos y letales. Kratos no tiene piedad.",
                      mult_vida=1.5, mult_velocidad=1.25, mult_cadencia=0.8, mult_danio=1.5,
-                     mult_spawn=0.75, danio_escape=20, vida_jefe=225, intervalo_ataques_jefe=0.8)
+                     mult_spawn=0.75, danio_escape=20, vida_jefe=225, intervalo_ataques_jefe=0.8,
+                     mult_xp_ganada=1.2, mult_xp_perdida=1.2)
 
 ORDEN_DIFICULTADES = (FACIL, NORMAL, DIFICIL)
 DIFICULTADES = {x.clave: x for x in ORDEN_DIFICULTADES}

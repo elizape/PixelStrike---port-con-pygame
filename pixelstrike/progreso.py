@@ -154,13 +154,13 @@ class Progreso:
         except Exception:
             return False
 
-    def borrar_progreso(self, ruta=None) -> bool:
+    def borrar_progreso(self, ruta=None, nueva_dificultad=None) -> bool:
         destino = Path(ruta) if ruta else self.ruta_guardado
         self.niveles = {"nivel0"}
         self.personajes = {d.PERSONAJE_INICIAL}
         self.personaje = d.PERSONAJE_INICIAL
         self.indice_tarjeta = 0
-        self.dificultad = d.DIFICULTAD_INICIAL
+        self.dificultad = nueva_dificultad if nueva_dificultad in d.DIFICULTADES else d.DIFICULTAD_INICIAL
         self.xp_total = 0
         self.puntajes = {}
         try:
@@ -169,3 +169,17 @@ class Progreso:
             return True
         except Exception:
             return False
+
+    def cambiar_dificultad(self, nueva: str) -> bool:
+        """Cambia la dificultad elegida. Si la nueva dificultad es distinta de la actual,
+        borra todos los datos de progreso (niveles, personajes, XP) y guarda.
+        Devuelve True si cambió la dificultad y se borró el progreso.
+        """
+        if nueva not in d.DIFICULTADES:
+            return False
+        if nueva != self.dificultad:
+            self.borrar_progreso(nueva_dificultad=nueva)
+            self.guardar()
+            return True
+        self.guardar()
+        return False

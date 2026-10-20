@@ -58,6 +58,12 @@ class DatosDificultadTest(unittest.TestCase):
         self.assertEqual((n.mult_vida, n.mult_velocidad, n.mult_cadencia, n.mult_danio, n.mult_spawn),
                          (1.0, 1.0, 1.0, 1.0, 1.0))
         self.assertEqual((n.danio_escape, n.vida_jefe, n.intervalo_ataques_jefe), (15, 150, 1.1))
+        self.assertEqual((n.mult_xp_ganada, n.mult_xp_perdida), (1.0, 1.0))
+
+    def test_multiplicadores_xp_por_dificultad(self):
+        self.assertEqual((d.FACIL.mult_xp_ganada, d.FACIL.mult_xp_perdida), (0.8, 1.0))
+        self.assertEqual((d.NORMAL.mult_xp_ganada, d.NORMAL.mult_xp_perdida), (1.0, 1.0))
+        self.assertEqual((d.DIFICIL.mult_xp_ganada, d.DIFICIL.mult_xp_perdida), (1.2, 1.2))
 
 
 class EnemigoTest(unittest.TestCase):
@@ -211,18 +217,41 @@ class FlujoDeEscenasTest(unittest.TestCase):
         self.assertIsInstance(self.juego.escena, SelectorNiveles)
         self.assertEqual(self.juego.progreso.dificultad, "dificil")
 
-    def test_esc_vuelve_a_elegir_sin_perder_el_progreso(self):
+    def test_selector_dificultad_tiene_cartel_de_aviso(self):
+        escena = self.juego.escena
+        self.assertIsInstance(escena, SelectorDificultad)
+        self.assertIn("se borrará todo el progreso", escena.TEXTO_AVISO)
+
+    def test_cambiar_dificultad_borra_el_progreso(self):
         self.juego.progreso.desbloquear_nivel("nivel1")
         self.juego.progreso.desbloquear_personaje("jade")
+        self.juego.progreso.xp_total = 250
         self.pulsar(pygame.K_RETURN)                          # Normal -> selector de niveles
         self.pulsar(aj.TECLA_VOLVER)
         self.assertIsInstance(self.juego.escena, SelectorDificultad)
-        self.assertEqual(self.juego.escena.indice, 1)         # arranca en la dificultad actual
-        self.pulsar(aj.TECLA_IZQUIERDA)
+        self.assertEqual(self.juego.escena.indice, 1)         # arranca en la dificultad actual (Normal)
+        self.pulsar(aj.TECLA_IZQUIERDA)                       # elige Fácil
         self.pulsar(pygame.K_RETURN)
         self.assertEqual(self.juego.progreso.dificultad, "facil")
+        self.assertFalse(self.juego.progreso.nivel_desbloqueado("nivel1"))
+        self.assertFalse(self.juego.progreso.personaje_desbloqueado("jade"))
+        self.assertEqual(self.juego.progreso.xp_total, 0)
+        self.assertEqual(self.juego.progreso.niveles, {"nivel0"})
+        self.assertEqual(self.juego.progreso.personajes, {d.PERSONAJE_INICIAL})
+
+    def test_confirmar_misma_dificultad_conserva_el_progreso(self):
+        self.juego.progreso.desbloquear_nivel("nivel1")
+        self.juego.progreso.desbloquear_personaje("jade")
+        self.juego.progreso.xp_total = 250
+        self.pulsar(pygame.K_RETURN)                          # Normal -> selector de niveles
+        self.pulsar(aj.TECLA_VOLVER)
+        self.assertIsInstance(self.juego.escena, SelectorDificultad)
+        self.assertEqual(self.juego.escena.indice, 1)         # arranca en Normal
+        self.pulsar(pygame.K_RETURN)                          # confirma Normal sin cambiar
+        self.assertEqual(self.juego.progreso.dificultad, "normal")
         self.assertTrue(self.juego.progreso.nivel_desbloqueado("nivel1"))
         self.assertTrue(self.juego.progreso.personaje_desbloqueado("jade"))
+        self.assertEqual(self.juego.progreso.xp_total, 250)
 
     def test_reiniciar_un_nivel_conserva_la_dificultad(self):
         self.juego.progreso.dificultad = "dificil"

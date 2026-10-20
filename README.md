@@ -47,6 +47,8 @@ Al abrir el juego se elige entre **Fácil**, **Normal** y **Difícil**. Normal e
 | Daño si un enemigo se escapa | 10 | 15 | 20 |
 | Vida de Kratos | 100 | 150 | 225 |
 | Tiempo entre ataques de Kratos | 1,4 s | 1,1 s | 0,8 s |
+| XP ganada (enemigos, racha, jefe, bono perfecto) | ×0,8 (-20%) | ×1 | ×1,2 (+20%) |
+| XP perdida (disparo recibido) | ×1 (fijo) | ×1 | ×1,2 (+20%) |
 
 Los valores están en `pixelstrike/datos.py` (`FACIL`, `NORMAL`, `DIFICIL`). El diseño completo está en [`docs/DISENO_DIFICULTAD.md`](docs/DISENO_DIFICULTAD.md).
 

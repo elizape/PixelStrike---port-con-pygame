@@ -30,6 +30,7 @@ class SelectorDificultad(Escena):
     Si existen `tituloPixelStrike.png` y `selectorTriangulos.png` en assets/ se usan;
     si no, se dibujan un título de texto y un recuadro dorado.
     """
+    TEXTO_AVISO = "AVISO: Si cambias de dificultad se borrará todo el progreso."
 
     def __init__(self, juego):
         super().__init__(juego)
@@ -107,8 +108,8 @@ class SelectorDificultad(Escena):
         lienzo.blit(derecho, (texto.right + MARGEN_TRIANGULOS - 10 - empuje, centro_y - derecho.get_height() // 2))
 
     def _confirmar(self):
-        self.juego.progreso.dificultad = d.ORDEN_DIFICULTADES[self.indice].clave
-        self.juego.progreso.guardar()
+        nueva = d.ORDEN_DIFICULTADES[self.indice].clave
+        self.juego.progreso.cambiar_dificultad(nueva)
         recursos.reproducir(d.SFX_CLICK)
         self.juego.ir_a_selector_niveles()
 
@@ -134,8 +135,18 @@ class SelectorDificultad(Escena):
                 self._marcar_opcion(lienzo, texto)
             else:
                 recursos.texto(lienzo, dificultad.nombre.upper(), 40, GRIS_CLARO, centro, y + 4)
-        recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 32, BLANCO, centro, 710)
-        recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 32, GRIS_CLARO, centro, 830)
+        recursos.texto(lienzo, d.ORDEN_DIFICULTADES[self.indice].descripcion, 30, BLANCO, centro, 705)
+
+        # Cartel de aviso: si cambia de dificultad se borrará todo el progreso
+        ancho_cartel = 780
+        alto_cartel = 46
+        caja_cartel = pygame.Rect(0, 0, ancho_cartel, alto_cartel)
+        caja_cartel.center = (centro, 765)
+        pygame.draw.rect(lienzo, (35, 20, 25), caja_cartel, border_radius=8)
+        pygame.draw.rect(lienzo, (220, 70, 70), caja_cartel, 2, border_radius=8)
+        recursos.texto(lienzo, self.TEXTO_AVISO, 22, (255, 150, 150), centro, caja_cartel.centery)
+
+        recursos.texto(lienzo, "W / S: elegir        Enter: confirmar", 28, GRIS_CLARO, centro, 835)
         self.dibujar_indicadores(lienzo)
 
 
