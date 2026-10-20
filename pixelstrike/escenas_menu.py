@@ -108,6 +108,7 @@ class SelectorDificultad(Escena):
 
     def _confirmar(self):
         self.juego.progreso.dificultad = d.ORDEN_DIFICULTADES[self.indice].clave
+        self.juego.progreso.guardar()
         recursos.reproducir(d.SFX_CLICK)
         self.juego.ir_a_selector_niveles()
 
@@ -145,6 +146,7 @@ class SelectorNiveles(Escena):
         super().__init__(juego)
         self.x, self.y = aj.SELECTOR_INICIO
         self.bloqueado = False        # true mientras se reproduce la transición
+        self.confirmando_borrado = False  # True mientras se muestra el cuadro para borrar progreso
         self.teclas = TeclasRepetibles({
             aj.TECLA_ARRIBA: self._subir,
             aj.TECLA_ABAJO: self._bajar,
@@ -192,6 +194,24 @@ class SelectorNiveles(Escena):
     def manejar_evento(self, evento):
         if evento.type != pygame.KEYDOWN or self.bloqueado:
             return
+
+        # Si el diálogo de confirmación de borrado de progreso está activo
+        if self.confirmando_borrado:
+            if evento.key in aj.TECLAS_ENTER:
+                self.juego.progreso.borrar_progreso()
+                self.confirmando_borrado = False
+                self.x, self.y = aj.SELECTOR_INICIO
+                recursos.reproducir(d.SFX_CLICK)
+            elif evento.key in (aj.TECLA_VOLVER, pygame.K_n):
+                self.confirmando_borrado = False
+                recursos.reproducir(d.SFX_CLICK)
+            return
+
+        if evento.key in (aj.TECLA_BORRAR, aj.TECLA_BORRAR_ALT):
+            self.confirmando_borrado = True
+            recursos.reproducir(d.SFX_CLICK)
+            return
+
         if self.teclas.tecla_abajo(evento.key):
             return
         if evento.key == aj.TECLA_DISPARO:       # 'p' abre el selector de personajes
@@ -202,6 +222,8 @@ class SelectorNiveles(Escena):
 
     def actualizar(self, dt):
         super().actualizar(dt)
+        if self.confirmando_borrado:
+            return
         self.teclas.actualizar(dt)
         if self.bloqueado or self.y != d.FILA_PUERTAS:
             return
@@ -225,10 +247,56 @@ class SelectorNiveles(Escena):
             abierta = self.juego.progreso.nivel_desbloqueado(clave)
             recursos.dibujar(lienzo, d.PUERTA_DESBLOQUEADA if abierta else d.PUERTA_BLOQUEADA,
                              px, d.FILA_PUERTAS)
+            if abierta:
+                puntaje = self.juego.progreso.puntaje_nivel(clave)
+                if puntaje > 0:
+                    centro_px = px * aj.CELDA + aj.CELDA
+                    recursos.texto(lienzo, f"Record: {puntaje} XP", 18, DORADO, centro_px+51, 375)
+                    ## centro_px + 5 es el ajuste de la posición del texto del puntaje por nivel 
+
         personaje = d.PERSONAJES[self.juego.progreso.personaje]
         recursos.dibujar(lienzo, personaje.skin, self.x, self.y)
-        recursos.texto(lienzo, f"Dificultad: {self.juego.progreso.dificultad_actual().nombre}   (Esc: cambiar)",
-                       30, BLANCO, aj.ANCHO - 340, 14)
+
+        # Nivel de XP del jugador
+        info = self.juego.progreso.info_xp
+        recursos.texto(lienzo, f"NIVEL XP: {info['nivel']}  -  {info['titulo'].upper()}",
+                       26, DORADO, 250, 14)
+        recursos.texto(lienzo, f"XP: {info['xp_en_nivel']} / {info['xp_para_subir']}  (Total: {info['xp_total']})",
+                       18, BLANCO, 240, 44)
+
+        # Barra gráfica de progreso XP
+        ancho_barra = 260
+        alto_barra = 10
+        x_barra = 240 - ancho_barra // 2
+        y_barra = 68
+        pygame.draw.rect(lienzo, (30, 30, 30), (x_barra, y_barra, ancho_barra, alto_barra), border_radius=4)
+        ancho_progreso = int(ancho_barra * info["porcentaje"])
+        if ancho_progreso > 0:
+            pygame.draw.rect(lienzo, DORADO, (x_barra, y_barra, ancho_progreso, alto_barra), border_radius=4)
+        pygame.draw.rect(lienzo, (160, 160, 160), (x_barra, y_barra, ancho_barra, alto_barra), 1, border_radius=4)
+
+        # Dificultad actual
+        recursos.texto(lienzo, f"Dificultad: {self.juego.progreso.dificultad_actual().nombre}",
+                       26, BLANCO, aj.ANCHO - 160, 14)
+
+        # Controles y ayuda
+        recursos.texto(lienzo, "W/A/S/D: Moverse    P: Personajes    Esc: Dificultad    Supr / X: Borrar Progreso",
+                       20, GRIS_CLARO, aj.ANCHO // 2, 865)
+
+        # Diálogo para confirmar borrado de progreso
+        if self.confirmando_borrado:
+            velo = pygame.Surface((aj.ANCHO, aj.ALTO), pygame.SRCALPHA)
+            velo.fill((0, 0, 0, 180))
+            lienzo.blit(velo, (0, 0))
+            caja = pygame.Rect(0, 0, 720, 220)
+            caja.center = (aj.ANCHO // 2, aj.ALTO // 2)
+            pygame.draw.rect(lienzo, (25, 25, 35), caja, border_radius=16)
+            pygame.draw.rect(lienzo, (220, 60, 60), caja, 4, border_radius=16)
+
+            recursos.texto(lienzo, "¿ELIMINAR TODO EL PROGRESO?", 34, (255, 100, 100), aj.ANCHO // 2, caja.top + 30)
+            recursos.texto(lienzo, "Se reiniciarán los niveles, personajes y XP.", 24, BLANCO, aj.ANCHO // 2, caja.top + 80)
+            recursos.texto(lienzo, "[ENTER] Confirmar borrado       [ESC] Cancelar", 24, DORADO, aj.ANCHO // 2, caja.top + 140)
+
         self.dibujar_indicadores(lienzo)
 
 
@@ -269,6 +337,7 @@ class SelectorPersonajes(Escena):
         personaje = d.ORDEN_PERSONAJES[progreso.indice_tarjeta]
         if progreso.personaje_desbloqueado(personaje.clave):
             progreso.personaje = personaje.clave
+            progreso.guardar()
             self.bloqueado = True
             recursos.reproducir(d.SFX_SELECCION_PERSONAJE)
             self.ui.despues(2.175, self._terminar)

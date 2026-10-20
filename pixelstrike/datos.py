@@ -20,11 +20,13 @@ class DatosArma:
 
 _SONIDOS_FUSIL = ("sonidoRifle(1).mp3", "sonidoRifle(4).mp3", "sonidoRifle(5).mp3")
 _SONIDOS_FUEGO = ("sonidoBolaFuego(1).mp3", "sonidoBolaFuego(2).mp3", "sonidoBolaFuego(3).mp3")
+_SONIDOS_FUEGO_MAGMA = ("sondioBolaMagma(1).mp3", "sonidoBolaMagma(2).mp3", "sonidoBolaMagma(3).mp3")
 
 FUSIL = DatosArma("bala(5).png", 10, 0.8, _SONIDOS_FUSIL)
 FUSIL_ALIEN = DatosArma("balaAlienRaptor(5).png", 10, 0.8, _SONIDOS_FUSIL)
 PISTOLA_PLASMA = DatosArma("balaPistolaPlasma.png", 8, 0.4, _SONIDOS_FUSIL)
 BOLA_FUEGO = DatosArma("balaCrawler(4).png", 10, 1.2, _SONIDOS_FUEGO)
+BOLA_MAGMA = DatosArma("balaZyrak.png", 7, 0.6, _SONIDOS_FUEGO_MAGMA)
 BOLA_FUEGO_KRATOS = DatosArma("balaKratos.png", 10, 0.4, _SONIDOS_FUEGO)
 BOLA_FUEGO_KRATOS_JUGABLE = DatosArma("balaKratos(1).png", 10, 0.4, _SONIDOS_FUEGO)
 
@@ -73,7 +75,7 @@ JEFE_ALTURA_MUERTE = 1.0
 
 ALIEN_RAPTOR = DatosEnemigo("alienRaptorArma(1).png", 20, FUSIL_ALIEN, (0.75, 2.0), (255, 105, 180), 1.75)
 CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75), (20, 120, 50), 1.75)
-
+ZYRAK = DatosEnemigo("Zyrak(2).png", 25, BOLA_MAGMA, (0.6, 0.9), (255, 140, 0), 1.75)
 
 # ============================================================================
 # Dificultades
@@ -239,6 +241,32 @@ SFX_WHOOSH = ("whoosh.mp3", "whoosh(1).mp3")
 
 
 # ============================================================================
+# Sistema de XP y Puntuación
+# ============================================================================
+XP_ALIEN = 25
+XP_CRAWLER = 40
+XP_PENALIZACION_DISPARO = 15
+XP_RACHA_3 = 10
+XP_RACHA_7 = 30
+XP_NIVEL_PERFECTO = 100
+XP_JEFE = 200
+
+UMBRALES_XP = (0, 150, 400, 800, 1400, 2200, 3200)
+XP_POR_NIVEL_ADICIONAL = 1000
+
+RANGOS_XP = {
+    1: "Recluta",
+    2: "Cadete",
+    3: "Soldado",
+    4: "Veterano",
+    5: "Comandante",
+    6: "Élite",
+    7: "Maestro",
+}
+
+
+
+# ============================================================================
 # Niveles
 # ============================================================================
 @dataclass(frozen=True)
@@ -250,6 +278,7 @@ class DatosNivel:
     tipo: str = "horda"                    # "tutorial" | "horda" | "jefe"
     aliens: int = 0
     crawlers: int = 0
+    zyraks: int = 0
     spawn_min: int = 0                     # segundos entre enemigos (se sortea un entero)
     spawn_max: int = 0
     powerup: Optional[str] = None
@@ -273,7 +302,7 @@ NIVELES = {
                          powerup="defensa", enemigo_con_powerup=4, banner=BANNER_NIVEL_3),
     "nivel4": DatosNivel("nivel4", "nivelFinalSong(1).mp3", "FondoJuegoNivelFinal.png",
                          tipo="jefe", personaje=KRATOS.clave),
-    "nivel_Pruebas": DatosNivel("nivel3", "", "FondoJuego(3).png",aliens=1, crawlers=1, spawn_min=4, spawn_max=4, powerup="danio", enemigo_con_powerup=1, banner=BANNER_NIVEL_1),
+    "nivel_Pruebas": DatosNivel("test", "", "FondoJuego(3).png",aliens=0, crawlers=0, zyraks=1, spawn_min=4, spawn_max=4, powerup="danio", enemigo_con_powerup=1, banner=BANNER_NIVEL_1),
 }
 
 # Puertas del selector de niveles: (columna, clave del nivel). Todas en la fila 3.

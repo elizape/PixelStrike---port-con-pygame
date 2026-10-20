@@ -42,6 +42,11 @@ class EscenaNivel(Escena):
         self.estado = CARGANDO
         self.paso_tutorial = 0
         self._aviso_pausa_visible = False
+        self.xp_nivel = 0
+        self.racha_actual = 0
+        self.disparos_recibidos = 0
+        self.bono_perfecto_otorgado = False
+        self._notificaciones_xp = []
         self.teclas = TeclasRepetibles({
             aj.TECLA_ARRIBA: lambda: self._mover(0, 1),
             aj.TECLA_ABAJO: lambda: self._mover(0, -1),
@@ -123,6 +128,10 @@ class EscenaNivel(Escena):
     # ========================================================================
     def actualizar(self, dt):
         super().actualizar(dt)
+        for notif in list(self._notificaciones_xp):
+            notif["tiempo"] -= dt
+            if notif["tiempo"] <= 0:
+                self._notificaciones_xp.remove(notif)
         if self.estado != PAUSA:                 # siguen animándose en victoria/derrota
             self.particulas.actualizar(dt)
             self.temblor.actualizar(dt)          # en pausa se congela
@@ -166,11 +175,44 @@ class EscenaNivel(Escena):
             return jefe
         return None
 
+    def _notificar_xp(self, texto, color=(255, 217, 59)):
+        self._notificaciones_xp.append({"texto": texto, "color": color, "tiempo": 2.2})
+        if len(self._notificaciones_xp) > 4:
+            self._notificaciones_xp.pop(0)
+
+    def disparo_recibido(self):
+        self.disparos_recibidos += 1
+        self.racha_actual = 0
+        self.xp_nivel = max(0, self.xp_nivel - d.XP_PENALIZACION_DISPARO)
+        self._notificar_xp(f"-{d.XP_PENALIZACION_DISPARO} XP (Disparo recibido)", color=(255, 90, 90))
+
     def enemigo_muerto(self, enemigo):
         self.particulas.emitir_en_celda(enemigo.x, enemigo.y + enemigo.tipo.altura_muerte,
                                         enemigo.tipo.color_muerte, CANTIDAD_ENEMIGO)
         if enemigo.powerup:
             self.items.append(ItemPowerUp(enemigo.powerup, enemigo.x, enemigo.y))
+
+        self.racha_actual += 1
+        if enemigo.tipo == d.ALIEN_RAPTOR:
+            puntos = d.XP_ALIEN
+            nombre_enemigo = "Alien"
+        elif enemigo.tipo == d.CRAWLER:
+            puntos = d.XP_CRAWLER
+            nombre_enemigo = "Crawler"
+        else:
+            puntos = d.XP_ALIEN
+            nombre_enemigo = "Enemigo"
+
+        self.xp_nivel += puntos
+        self._notificar_xp(f"+{puntos} XP ({nombre_enemigo})")
+
+        # Bonificaciones por racha sin recibir disparos
+        if self.racha_actual % 7 == 3:
+            self.xp_nivel += d.XP_RACHA_3
+            self._notificar_xp(f"¡Racha de 3! +{d.XP_RACHA_3} XP", color=(255, 217, 59))
+        elif self.racha_actual % 7 == 0 and self.racha_actual > 0:
+            self.xp_nivel += d.XP_RACHA_7
+            self._notificar_xp(f"¡Racha de 7! +{d.XP_RACHA_7} XP", color=(255, 217, 59))
 
     def sacudir(self, danio):
         """Hace temblar el juego (no la interfaz) según el daño que se acaba de recibir."""
@@ -182,6 +224,8 @@ class EscenaNivel(Escena):
         self.jugador.recibir_danio(self.dificultad.danio_escape)
 
     def jefe_derrotado(self):
+        self.xp_nivel += d.XP_JEFE
+        self._notificar_xp(f"¡Kratos derrotado! +{d.XP_JEFE} XP", color=(255, 217, 59))
         # Una explosión grande en varias tandas sobre el cuerpo de Kratos
         for i in range(4):
             self.ui.despues(0.12 * i, lambda: self.particulas.emitir_en_celda(
@@ -215,7 +259,8 @@ class EscenaNivel(Escena):
         datos = self.datos
         dificultad = self.dificultad
         cola = ([Enemigo(d.ALIEN_RAPTOR, dificultad) for _ in range(datos.aliens)]
-                + [Enemigo(d.CRAWLER, dificultad) for _ in range(datos.crawlers)])
+                + [Enemigo(d.CRAWLER, dificultad) for _ in range(datos.crawlers)]
+                + [Enemigo(d.ZYRAK, dificultad) for _ in range(datos.zyraks)])
         random.shuffle(cola)
         if con_powerup and datos.powerup and datos.enemigo_con_powerup <= len(cola):
             cola[datos.enemigo_con_powerup - 1].powerup = datos.powerup
@@ -260,17 +305,28 @@ class EscenaNivel(Escena):
                 self.mostrar(siguiente)
         self.mostrar(d.TUTO_FIN)
         self.juego.progreso.desbloquear_nivel(self.datos.siguiente)
+        self._finalizar_puntaje()
         yield 5.0
         self._continuar()
 
     # ========================================================================
     # Fin del nivel
     # ========================================================================
+    def _finalizar_puntaje(self):
+        if self.bono_perfecto_otorgado:
+            return
+        self.bono_perfecto_otorgado = True
+        if self.disparos_recibidos == 0:
+            self.xp_nivel += d.XP_NIVEL_PERFECTO
+            self._notificar_xp(f"¡Nivel Perfecto! +{d.XP_NIVEL_PERFECTO} XP", color=(255, 217, 59))
+        self.juego.progreso.registrar_puntaje_nivel(self.datos.clave, self.xp_nivel)
+
     def _victoria(self):
         self.estado = VICTORIA
         self.juego.progreso.desbloquear_nivel(self.datos.siguiente)
         if self.juego.progreso.desbloquear_personaje(self.datos.personaje):
             self.ui.despues(2.0, self._avisar_personaje_desbloqueado)
+        self._finalizar_puntaje()
         recursos.reproducir(d.SFX_VICTORIA_1)
         recursos.reproducir(d.SFX_VICTORIA_2)
         self.mostrar(d.HAS_GANADO)
@@ -339,4 +395,22 @@ class EscenaNivel(Escena):
             self.jefe.dibujar_barra_vida(lienzo)
         dibujar_barra_vida(lienzo, self.jugador.vida, self.jugador.vida_max, 0, 17, d.CORAZON_ROJO)
         dibujar_barra_powerups(lienzo, self.jugador)
+
+        # Marcador de XP y racha del nivel actual
+        recursos.texto(lienzo, f"XP: {self.xp_nivel}", 28, (255, 217, 59), aj.ANCHO // 2, 14)
+        if self.racha_actual >= 2:
+            recursos.texto(lienzo, f"Racha: {self.racha_actual}x", 20, (255, 255, 120), aj.ANCHO // 2, 44)
+
+        # Notificaciones emergentes de XP (+25 XP, -15 XP, Racha, etc.)
+        y_notif = 68
+        for notif in self._notificaciones_xp[-3:]:
+            recursos.texto(lienzo, notif["texto"], 20, notif["color"], aj.ANCHO // 2, y_notif)
+            y_notif += 24
+
+        # En pantalla de victoria, resumen de XP del nivel
+        if self.estado == VICTORIA:
+            recursos.texto(lienzo, f"XP NIVEL: {self.xp_nivel}", 38, (255, 217, 59), aj.ANCHO // 2, 450)
+            if self.disparos_recibidos == 0:
+                recursos.texto(lienzo, f"¡Nivel Perfecto! (+{d.XP_NIVEL_PERFECTO} XP)", 26, (255, 255, 255), aj.ANCHO // 2, 500)
+
         self.dibujar_indicadores(lienzo)

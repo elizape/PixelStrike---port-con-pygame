@@ -14,6 +14,7 @@ ALTO = ALTO_GRILLA * CELDA
 FPS = 60
 
 DIR_ASSETS = Path(__file__).resolve().parent.parent / "assets"
+RUTA_GUARDADO = Path(__file__).resolve().parent.parent / "progreso.json"
 
 # --- Audio -------------------------------------------------------------------
 VOLUMEN_MUSICA = 0.4
@@ -54,4 +55,6 @@ TECLA_PAUSA = pygame.K_m
 TECLA_REINICIAR = pygame.K_r
 TECLA_SELECTOR = pygame.K_t
 TECLA_VOLVER = pygame.K_ESCAPE      # del selector de niveles al selector de dificultad
+TECLA_BORRAR = pygame.K_DELETE      # borrar progreso
+TECLA_BORRAR_ALT = pygame.K_x       # alternativa para borrar progreso
 TECLAS_ENTER = (pygame.K_RETURN, pygame.K_KP_ENTER)

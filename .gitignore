@@ -2,3 +2,5 @@ juego-python/
 .venv/
 __pycache__/
 *.pyc
+progreso.json
+*.tmp

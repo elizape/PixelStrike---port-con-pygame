@@ -94,6 +94,8 @@ class BalaEnemigo(Bala):
         recursos.reproducir_al_azar(d.SONIDOS_IMPACTO)
         nivel.sacudir(self.danio * jugador.defensa)
         jugador.recibir_danio(self.danio)
+        if hasattr(nivel, "disparo_recibido"):
+            nivel.disparo_recibido()
         return True
 
 
