@@ -75,7 +75,7 @@ JEFE_ALTURA_MUERTE = 1.0
 
 ALIEN_RAPTOR = DatosEnemigo("alienRaptorArma(1).png", 20, FUSIL_ALIEN, (0.75, 2.0), (255, 105, 180), 1.75)
 CRAWLER = DatosEnemigo("crawler(2).png", 30, BOLA_FUEGO, (0.5, 0.75), (20, 120, 50), 1.75)
-ZYRAK = DatosEnemigo("Zyrak(2).png", 25, BOLA_MAGMA, (0.6, 0.9), (255, 140, 0), 1.75)
+ZYRAK = DatosEnemigo("Zyrak(3).png", 25, BOLA_MAGMA, (0.6, 0.9), (255, 140, 0), 1.75)
 
 # ============================================================================
 # Dificultades
